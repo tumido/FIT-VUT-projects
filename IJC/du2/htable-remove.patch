@@ -1,0 +1,11 @@
+--- htable-remove.c	2014-04-30 13:35:34.344495554 +0200
++++ htable-remove-new.c	2014-04-30 13:35:49.734057139 +0200
+@@ -23,7 +23,7 @@
+ 
+ 	struct htab_listitem * itemPrev;
+ 
+-	if (strcmp(item->key, key) == EXIT_SUCCESS)
++	if (item != NULL && strcmp(item->key, key) == EXIT_SUCCESS)
+ 	{
+ 		t->list[index] = item->next;
+ 	} else
