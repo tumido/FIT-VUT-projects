@@ -28,9 +28,9 @@
  * - obsahuje rozmery obrazku a obrazova data
  */
 struct ppm {
-	unsigned xsize;
-	unsigned ysize;
-	char data[]; // RGB bajty, celkem 3*xsize*ysize }
+  unsigned xsize;
+  unsigned ysize;
+  char data[]; // RGB bajty, celkem 3*xsize*ysize }
 };
 
 /*   Nacteni obrazku

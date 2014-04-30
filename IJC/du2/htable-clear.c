@@ -19,18 +19,18 @@
  */
 void htab_clear(htab_t * t)
 {
-	for (unsigned int i=0; i < t->size; i++)
-	{
-		htab_clearRow((t->list)[i]);
-		t->list[i] = NULL;
-	}
+  for (unsigned int i=0; i < t->size; i++)
+  {
+    htab_clearRow((t->list)[i]);
+    t->list[i] = NULL;
+  }
 }
 
 void htab_clearRow(struct htab_listitem * item)
 {
-	if (item == NULL)
-		return;
-	htab_clearRow(item->next);
-	free(item->key);
-	free(item);
+  if (item == NULL)
+    return;
+  htab_clearRow(item->next);
+  free(item->key);
+  free(item);
 }

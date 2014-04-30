@@ -21,8 +21,8 @@
  */
 void printErr(const char * msg)
 {
-	fprintf(stderr, "\x1B[31m%s\033[0m\n", msg);
-	return;
+  fprintf(stderr, "\x1B[31m%s\033[0m\n", msg);
+  return;
 }
 
 /*   Ziskani slova ze vstupu
@@ -34,28 +34,28 @@ void printErr(const char * msg)
  */
 int fgetw(char *s, int max, FILE *f)
 {
-	int length = 0;
-	int letter;
+  int length = 0;
+  int letter;
 
-	if (max > MAX_LENGTH) {max = MAX_LENGTH; }
-	if (s == NULL || max ==0 || f == NULL || feof(f) != 0) { return 0; }
+  if (max > MAX_LENGTH) {max = MAX_LENGTH; }
+  if (s == NULL || max ==0 || f == NULL || feof(f) != 0) { return 0; }
 
-	while ((letter = fgetc(f)) != EOF && isspace(letter)) {}
+  while ((letter = fgetc(f)) != EOF && isspace(letter)) {}
 
-	while (letter != EOF && !isspace(letter) && length < max)
-	{
-		s[length] = letter;
-		length++;
-		letter = fgetc(f);
-	}
-	s[length] = '\0';
+  while (letter != EOF && !isspace(letter) && length < max)
+  {
+    s[length] = letter;
+    length++;
+    letter = fgetc(f);
+  }
+  s[length] = '\0';
 
-	if (letter == EOF) {return EOF; }
+  if (letter == EOF) {return EOF; }
 
-	if (length == max)
-	{
-		while ((letter = fgetc(f)) != EOF && !isspace(letter)) {}
-	}
-	ungetc(letter, f);
-	return length;
+  if (length == max)
+  {
+    while ((letter = fgetc(f)) != EOF && !isspace(letter)) {}
+  }
+  ungetc(letter, f);
+  return length;
 }

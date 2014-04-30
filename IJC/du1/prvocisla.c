@@ -27,26 +27,26 @@
  */
 int main()
 {
-	BitArray(pole, SIZE);
-	Eratosthenes(pole);
+  BitArray(pole, SIZE);
+  Eratosthenes(pole);
 
-	unsigned long result[10];
+  unsigned long result[10];
 
-	unsigned long k = BitArraySize(pole) - 1;
-	for (int i = 0; i < 10; i++)
-	{
-		while (GetBit(pole, k) != 0)
-		{
-			k--;
-		}
-		result[i] = k;
-		k--;
-	}
+  unsigned long k = BitArraySize(pole) - 1;
+  for (int i = 0; i < 10; i++)
+  {
+    while (GetBit(pole, k) != 0)
+    {
+      k--;
+    }
+    result[i] = k;
+    k--;
+  }
 
-	for (int i = 9; i >= 0; i--)
-	{
-		printf("%lu\n", result[i]);
-	}
+  for (int i = 9; i >= 0; i--)
+  {
+    printf("%lu\n", result[i]);
+  }
 
-	return EXIT_SUCCESS;
+  return EXIT_SUCCESS;
 }

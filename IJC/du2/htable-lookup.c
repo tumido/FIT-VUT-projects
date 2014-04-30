@@ -16,25 +16,25 @@
  */
 struct htab_listitem * htab_lookup(htab_t *t, const char *key)
 {
-	unsigned int index = hash_function(key, t->size);
-	struct htab_listitem * item = (t->list)[index];
+  unsigned int index = hash_function(key, t->size);
+  struct htab_listitem * item = (t->list)[index];
 
-	if (item == NULL) // na indexu neni zadny prvek
-	{
-		(t->list)[index] = htab_new(key); // pokusim se vytvorit
-		return t->list[index];
-	}
+  if (item == NULL) // na indexu neni zadny prvek
+  {
+    (t->list)[index] = htab_new(key); // pokusim se vytvorit
+    return t->list[index];
+  }
 
-	struct htab_listitem * itemPrev = item;
+  struct htab_listitem * itemPrev = item;
 
-	while (item != NULL)
-	{
-		if (strcmp(item->key, key) == EXIT_SUCCESS) { return item; }
-		itemPrev = item;
-		item = item->next;
-	}
+  while (item != NULL)
+  {
+    if (strcmp(item->key, key) == EXIT_SUCCESS) { return item; }
+    itemPrev = item;
+    item = item->next;
+  }
 
-	return itemPrev->next = htab_new(key);
+  return itemPrev->next = htab_new(key);
 }
 
 /*   Vytvoreni noveho zaznamu
@@ -45,18 +45,18 @@ struct htab_listitem * htab_lookup(htab_t *t, const char *key)
  */
 struct htab_listitem * htab_new(const char *key)
 {
-	struct htab_listitem * item = malloc(sizeof(struct htab_listitem));
-	if (item == NULL) { return NULL; }
+  struct htab_listitem * item = malloc(sizeof(struct htab_listitem));
+  if (item == NULL) { return NULL; }
 
-	item->data = 0;
-	item->next = NULL;
+  item->data = 0;
+  item->next = NULL;
 
-	if ((item->key = malloc(sizeof(char) * (strlen(key) + 1))) == NULL)
-	{
-		free(item);
-		return NULL;
-	}
+  if ((item->key = malloc(sizeof(char) * (strlen(key) + 1))) == NULL)
+  {
+    free(item);
+    return NULL;
+  }
 
-	strcpy(item->key, key);
-	return item;
+  strcpy(item->key, key);
+  return item;
 }

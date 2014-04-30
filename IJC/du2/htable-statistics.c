@@ -17,22 +17,22 @@
  */
 void htab_statistics(htab_t * t)
 {
-	long sum = 0;
-	long min = -1;
-	long max;
-	for (unsigned int i=0; i<t->size; i++)
-	{
-		int length = 0;
-		for (struct htab_listitem * item = (t->list)[i]; item != NULL; item = item->next)
-		{
-			length++;
-		}
-		if (min == -1) { min = length; max = length; }
-		if (length < min) { min = length; }
-		if (length > max) { max = length; }
-		sum += length;
-	}
-	printf("\nPrumer: %f\n", (double)sum / t->size  );
-	printf("Min: %ld\n", min);
-	printf("Max: %ld\n", max);
+  long sum = 0;
+  long min = -1;
+  long max;
+  for (unsigned int i=0; i<t->size; i++)
+  {
+    int length = 0;
+    for (struct htab_listitem * item = (t->list)[i]; item != NULL; item = item->next)
+    {
+      length++;
+    }
+    if (min == -1) { min = length; max = length; }
+    if (length < min) { min = length; }
+    if (length > max) { max = length; }
+    sum += length;
+  }
+  printf("\nPrumer: %f\n", (double)sum / t->size  );
+  printf("Min: %ld\n", min);
+  printf("Max: %ld\n", max);
 }

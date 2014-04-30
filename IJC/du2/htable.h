@@ -21,14 +21,14 @@
  *   dat a velikost tabulky
  */
 struct htab_listitem {
-	char * key;
-	unsigned data;
-	struct htab_listitem * next;
+  char * key;
+  unsigned data;
+  struct htab_listitem * next;
 };
 
 typedef struct {
-	unsigned size;
-	struct htab_listitem ** list;
+  unsigned size;
+  struct htab_listitem ** list;
 } htab_t;
 
 typedef void (* callback)(const char * key, unsigned int value);

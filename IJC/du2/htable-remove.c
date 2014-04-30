@@ -18,27 +18,27 @@
  */
 void htab_remove(htab_t * t, const char * key)
 {
-	unsigned int index = hash_function(key, t->size);
-	struct htab_listitem * item = t->list[index];
+  unsigned int index = hash_function(key, t->size);
+  struct htab_listitem * item = t->list[index];
 
-	struct htab_listitem * itemPrev;
+  struct htab_listitem * itemPrev;
 
-	if (item != NULL && strcmp(item->key, key) == EXIT_SUCCESS)
-	{
-		t->list[index] = item->next;
-	} else
-	{
-		while (item != NULL && strcmp(item->key, key) != EXIT_SUCCESS)
-		{
-			itemPrev = item;
-			item = item->next;
-		}
-	}
+  if (item != NULL && strcmp(item->key, key) == EXIT_SUCCESS)
+  {
+    t->list[index] = item->next;
+  } else
+  {
+    while (item != NULL && strcmp(item->key, key) != EXIT_SUCCESS)
+    {
+      itemPrev = item;
+      item = item->next;
+    }
+  }
 
-	if (item != NULL)
-	{
-		itemPrev->next = item->next;
-		free(item->key);
-		free(item);
-	}
+  if (item != NULL)
+  {
+    itemPrev->next = item->next;
+    free(item->key);
+    free(item);
+  }
 }

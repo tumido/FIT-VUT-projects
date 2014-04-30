@@ -38,7 +38,7 @@
  */
 void print_item (const char * key, unsigned int value)
 {
-	printf("%s\t%u\n", key, value);
+  printf("%s\t%u\n", key, value);
 }
 
 /*   Main
@@ -49,32 +49,32 @@ void print_item (const char * key, unsigned int value)
  */
 int main()
 {
-	htab_t * t;
-	if ((t = htab_init(HTABLE_SIZE)) == NULL)
-	{
-		return EXIT_FAILURE;
-	}
+  htab_t * t;
+  if ((t = htab_init(HTABLE_SIZE)) == NULL)
+  {
+    return EXIT_FAILURE;
+  }
 
-	htab_remove(t,"Harry");
-	char word [MAX_LENGTH];
-	int retVal;
-	while ((retVal = fgetw(word, MAX_LENGTH + 1, stdin)) != 0 && retVal != EOF)
-	{
-		struct htab_listitem * item;
-		if ((item = htab_lookup(t, word)) == NULL)
-		{
-			htab_free(t);
-			return EXIT_FAILURE;
-		}
-		item->data += 1;
-	}
+  htab_remove(t,"Harry");
+  char word [MAX_LENGTH];
+  int retVal;
+  while ((retVal = fgetw(word, MAX_LENGTH + 1, stdin)) != 0 && retVal != EOF)
+  {
+    struct htab_listitem * item;
+    if ((item = htab_lookup(t, word)) == NULL)
+    {
+      htab_free(t);
+      return EXIT_FAILURE;
+    }
+    item->data += 1;
+  }
 
-	htab_remove(t, "Harry");
-	htab_foreach(t, print_item);
+  htab_remove(t, "Harry");
+  htab_foreach(t, print_item);
 
-	htab_statistics(t);
-	htab_free(t);
+  htab_statistics(t);
+  htab_free(t);
 
-	return EXIT_SUCCESS;
+  return EXIT_SUCCESS;
 }
 

@@ -22,17 +22,17 @@
  */
 void Eratosthenes(BitArray_t pole)
 {
-	const unsigned long sqtrPole = sqrt(BitArraySize(pole) + 1);
-	for (unsigned long index = 2; (index <= sqtrPole); index++)
-	{
-		if (GetBit(pole,index) == 0)
-		{
-			for (unsigned long n = index * index; n < BitArraySize(pole); n+=index)
-			{
-				SetBit(pole, n, true);
-			}
-		}
-	}
-	return;
+  const unsigned long sqtrPole = sqrt(BitArraySize(pole) + 1);
+  for (unsigned long index = 2; (index <= sqtrPole); index++)
+  {
+    if (GetBit(pole,index) == 0)
+    {
+      for (unsigned long n = index * index; n < BitArraySize(pole); n+=index)
+      {
+        SetBit(pole, n, true);
+      }
+    }
+  }
+  return;
 }
 

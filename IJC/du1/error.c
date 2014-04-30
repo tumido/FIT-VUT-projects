@@ -24,12 +24,12 @@
  */
 void Warning(const char *fmt, ...)
 {
-	va_list args;
-	va_start(args, fmt);
-	fputs("Chyba: ", stderr);
-	vfprintf(stderr, fmt, args);
-	va_end(args);
-	return;
+  va_list args;
+  va_start(args, fmt);
+  fputs("Chyba: ", stderr);
+  vfprintf(stderr, fmt, args);
+  va_end(args);
+  return;
 }
 
 /*   Chyba
@@ -41,11 +41,11 @@ void Warning(const char *fmt, ...)
  */
 void FatalError(const char *fmt, ...)
 {
-	va_list args;
-	va_start(args, fmt);
-	fputs("Chyba: ", stderr);
-	vfprintf(stderr, fmt, args);
-	va_end(args);
-	exit(1);
-	return;
+  va_list args;
+  va_start(args, fmt);
+  fputs("Chyba: ", stderr);
+  vfprintf(stderr, fmt, args);
+  va_end(args);
+  exit(1);
+  return;
 }

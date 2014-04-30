@@ -18,11 +18,11 @@
  */
 void htab_foreach(htab_t * t, callback function)
 {
-	for (unsigned int i=0; i<t->size; i++)
-	{
-		for (struct htab_listitem * item = (t->list)[i]; item != NULL; item = item->next)
-		{
-			function(item->key, item->data);
-		}
-	}
+  for (unsigned int i=0; i<t->size; i++)
+  {
+    for (struct htab_listitem * item = (t->list)[i]; item != NULL; item = item->next)
+    {
+      function(item->key, item->data);
+    }
+  }
 }
