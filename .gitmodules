@@ -1,3 +1,6 @@
 [submodule "IFJ"]
 	path = IFJ
 	url = git@github.com:tumido/IFJ-Group-Project.git
+[submodule "ISJ"]
+	path = ISJ
+	url = git@bitbucket.org:xauder/isj-projekt.git
