@@ -18,3 +18,5 @@ Projects
 * IJC
     1. Bit array, macros in C (Sieve of Eratosthenes, simple cypher - decode message from PPM image)
     2. Implement GNU Fold utility (modified a bit) in C and C++, hash table and create shared library
+* ISJ
+    1. Webserver managing database of kindergartens based on location and budget (for more details see the [original repository](https://bitbucket.org/xauder/isj-projekt "Hosted on Bitbucket"))
