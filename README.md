@@ -1,7 +1,7 @@
 FIT VUT
 =======
 
-This repository contains all of projects I've done (or participated in) during my studies at Brno Univesity of Technology - Faculty of Information Technology. Feel free to inspire yourself but be aware - there are some projects that hasn't been corrected after the deadline. It's possible that there are some errors. So if you find any please feel free to message me or even better make a pull request.
+This repository contains all of projects I've done (or participated in) during my studies at Brno Univesity of Technology - Faculty of Information Technology. Feel free to inspire yourself but be aware - there are projects that hasn't been corrected after the deadline. It's possible that there are some errors. If you find any please feel free to message me or even better make a pull request (if you are interested :P )
 
 Enjoy!
 
@@ -20,3 +20,5 @@ Projects
     2. Implement GNU Fold utility (modified a bit) in C and C++, hash table and create shared library
 * ISJ
     1. Webserver managing database of kindergartens based on location and budget (for more details see the [original repository](https://bitbucket.org/xauder/isj-projekt "Hosted on Bitbucket"))
+* IFJ
+    1. Pascal interpreter. Team of 4 members. I'm not proud about the result, but judge for yourself...
