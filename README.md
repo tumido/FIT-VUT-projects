@@ -23,13 +23,13 @@ Projects listed
 * IFJ
     1. Pascal interpreter. Team of 4 members. I'm not proud about the result, but judge yourself...
 * ISS
-    1. Some image filtering and nouse reduction etc.
+    1. Some image filtering and noise reduction etc.
 * ITY
     1. LaTeX basics
     2. Use LaTeX for math formulas
 
-Subject not listed
-------------------
+Subjects not listed
+-------------------
 Projects in some subjects were mainly about completing definitions of functions for given framework of which I'm not the author. Due to this I won't publish these source codes.
 * IAL - sorting and searching methods, queues and stacks
 * IZG - displaying of 2D and 3D object, filling them etc.
