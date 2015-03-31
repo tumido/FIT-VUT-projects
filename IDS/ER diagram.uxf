@@ -1,0 +1,442 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<diagram program="umlet" version="13.2">
+  <zoom_level>9</zoom_level>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>315</x>
+      <y>207</y>
+      <w>189</w>
+      <h>54</h>
+    </coordinates>
+    <panel_attributes>Lékař
+--
+Specializace</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>63</x>
+      <y>207</y>
+      <w>189</w>
+      <h>54</h>
+    </coordinates>
+    <panel_attributes>Zdravotní sestra
+--
+Kvalifikace</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>576</x>
+      <y>180</y>
+      <w>189</w>
+      <h>126</h>
+    </coordinates>
+    <panel_attributes>Pacient
+--
+&lt;&lt;PK&gt;&gt;Rodné číslo
+Jméno
+Pojišťovna
+Adresa
+Kontakt na příbuzné
+Telefon
+E-mail</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>576</x>
+      <y>387</y>
+      <w>189</w>
+      <h>72</h>
+    </coordinates>
+    <panel_attributes>Hospitalizace
+--
+&lt;&lt;PK&gt;&gt; ID Hospitalizace
+Datum začátku
+Datum konce</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>576</x>
+      <y>729</y>
+      <w>189</w>
+      <h>117</h>
+    </coordinates>
+    <panel_attributes>Léčivo
+--
+&lt;&lt;PK&gt;&gt; Katalogové označení
+Název
+Účinná látka
+Kontraindikace
+Doporučené dávkování
+Množství účinné látky</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>315</x>
+      <y>459</y>
+      <w>189</w>
+      <h>99</h>
+    </coordinates>
+    <panel_attributes>Vyšetření
+--
+&lt;&lt;PK&gt;&gt; ID Vyšetření
+Druh vyšetření
+Čas
+Datum
+Výsledek</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>333</x>
+      <y>828</y>
+      <w>189</w>
+      <h>72</h>
+    </coordinates>
+    <panel_attributes>Oddělení
+--
+&lt;&lt;PK&gt;&gt; Název oddělení
+Telefon na sesternu
+Kapacita lůžek</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>261</x>
+      <y>495</y>
+      <w>189</w>
+      <h>351</h>
+    </coordinates>
+    <panel_attributes>lt=-
+m1=0..n
+m2=1
+/probíhá/</panel_attributes>
+    <additional_attributes>60.0;10.0;10.0;10.0;10.0;340.0;190.0;340.0;190.0;370.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>657</x>
+      <y>297</y>
+      <w>81</w>
+      <h>108</h>
+    </coordinates>
+    <panel_attributes>lt=-
+m1=1
+m2=1..n
+/absolvuje/
+</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;100.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>486</x>
+      <y>891</y>
+      <w>108</w>
+      <h>81</h>
+    </coordinates>
+    <panel_attributes>lt=-
+m1=1
+m2=0..n
+
+</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;60.0;100.0;60.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>351</x>
+      <y>252</y>
+      <w>72</w>
+      <h>225</h>
+    </coordinates>
+    <panel_attributes>lt=-
+m1=1
+m2=0..n
+/provádí/</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;230.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>495</x>
+      <y>450</y>
+      <w>162</w>
+      <h>81</h>
+    </coordinates>
+    <panel_attributes>lt=-
+m1=0..n
+m2=1
+/zahrnuje/</panel_attributes>
+    <additional_attributes>10.0;60.0;160.0;60.0;160.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>657</x>
+      <y>630</y>
+      <w>45</w>
+      <h>117</h>
+    </coordinates>
+    <panel_attributes>lt=-
+m1=0..n
+m2=1</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;110.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>459</x>
+      <y>729</y>
+      <w>135</w>
+      <h>81</h>
+    </coordinates>
+    <panel_attributes>lt=-
+m1=1
+m2=0..n</panel_attributes>
+    <additional_attributes>130.0;60.0;10.0;60.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>117</x>
+      <y>252</y>
+      <w>261</w>
+      <h>693</h>
+    </coordinates>
+    <panel_attributes>lt=-
+m1=1..n
+m2=1
+/pracuje/</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;750.0;270.0;750.0;270.0;720.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>234</x>
+      <y>414</y>
+      <w>117</w>
+      <h>477</h>
+    </coordinates>
+    <panel_attributes>lt=-
+m1=1..n
+m2=1</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;500.0;110.0;500.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>432</x>
+      <y>252</y>
+      <w>162</w>
+      <h>198</h>
+    </coordinates>
+    <panel_attributes>lt=-
+m1=1
+m2=0..n
+/dozoruje/</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;190.0;160.0;190.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>324</x>
+      <y>630</y>
+      <w>189</w>
+      <h>108</h>
+    </coordinates>
+    <panel_attributes>/aplikuje/
+--
+&lt;&lt;PK&gt;&gt; ID Vyšetření
+&lt;&lt;PK&gt;&gt; Katalogové označení
+Množství
+Datum
+Čas</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>576</x>
+      <y>549</y>
+      <w>189</w>
+      <h>90</h>
+    </coordinates>
+    <panel_attributes>/užívá/
+--
+&lt;&lt;PK&gt;&gt; ID Hospitalizace
+&lt;&lt;PK&gt;&gt; Katalogové označení
+Frekvence
+Množství</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>144</x>
+      <y>333</y>
+      <w>189</w>
+      <h>90</h>
+    </coordinates>
+    <panel_attributes>/pracuje/
+--
+&lt;&lt;PK&gt;&gt; Login
+&lt;&lt;PK&gt;&gt; Název oddělení
+Telefon
+Úvazek</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>270</x>
+      <y>234</y>
+      <w>63</w>
+      <h>117</h>
+    </coordinates>
+    <panel_attributes>lt=-
+m1=1..n
+m2=1</panel_attributes>
+    <additional_attributes>10.0;110.0;10.0;10.0;50.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>657</x>
+      <y>450</y>
+      <w>45</w>
+      <h>117</h>
+    </coordinates>
+    <panel_attributes>lt=-
+m1=1
+m2=0..n</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;110.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>396</x>
+      <y>549</y>
+      <w>45</w>
+      <h>99</h>
+    </coordinates>
+    <panel_attributes>lt=-
+m1=1
+m2=0..n</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;90.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>576</x>
+      <y>882</y>
+      <w>189</w>
+      <h>90</h>
+    </coordinates>
+    <panel_attributes>/poskytuje/
+--
+&lt;&lt;PK&gt;&gt; Název oddělení
+&lt;&lt;PK&gt;&gt; ID Hospitalizace
+Datum zahájení
+Datum ukončení</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>756</x>
+      <y>432</y>
+      <w>72</w>
+      <h>540</h>
+    </coordinates>
+    <panel_attributes>lt=-
+m1=1
+m2=1..n
+
+</panel_attributes>
+    <additional_attributes>10.0;10.0;60.0;10.0;60.0;570.0;10.0;570.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>189</x>
+      <y>0</y>
+      <w>189</w>
+      <h>144</h>
+    </coordinates>
+    <panel_attributes>Personál
+--
+&lt;&lt;PK&gt;&gt; Rodné číslo
+Login
+Jméno
+Heslo
+Adresa
+Telefon
+E-mail
+Úvazek</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>153</x>
+      <y>135</y>
+      <w>135</w>
+      <h>90</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>130.0;10.0;130.0;50.0;10.0;50.0;10.0;80.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>261</x>
+      <y>135</y>
+      <w>153</w>
+      <h>90</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;50.0;150.0;50.0;150.0;80.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>81</x>
+      <y>252</y>
+      <w>360</w>
+      <h>729</h>
+    </coordinates>
+    <panel_attributes>lt=-
+m1=1
+m2=0..1
+/vede/</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;790.0;360.0;790.0;360.0;720.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>450</x>
+      <y>405</y>
+      <w>450</w>
+      <h>612</h>
+    </coordinates>
+    <panel_attributes>lt=-
+m1=0..n
+m2=1
+/ probíhá/</panel_attributes>
+    <additional_attributes>350.0;10.0;430.0;10.0;430.0;660.0;10.0;660.0;10.0;550.0</additional_attributes>
+  </element>
+</diagram>
