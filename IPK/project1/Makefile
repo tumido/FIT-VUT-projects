@@ -18,7 +18,7 @@
 #  ---------------------------------------------------------------------
 CC = gcc
 CFLAGS = -std=c99 -pedantic -Wall -Werror
-PROGS = client # server
+PROGS = client server
 OBJECTS = io.o
 #    Pravidla pro jednotlive programy
 #  ---------------------------------------------------------------------

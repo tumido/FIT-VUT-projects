@@ -67,12 +67,12 @@ int establish_connection(struct message * data, int * sock)
   socket_in.sin_port = htons(data->port);
 
   if ((host_ptr = gethostbyname(data->host)) == NULL)
-    { print_err("Host not found"); return EXIT_FAILURE; }
+    { print_err("Host '%s' not found", data->host); return EXIT_FAILURE; }
 
   memcpy(&socket_in.sin_addr, host_ptr->h_addr_list[0], host_ptr->h_length);
 
   if (connect(*sock, (struct sockaddr *) &socket_in, sizeof(socket_in)) < 0)
-    { print_err("Unable to connect"); return EXIT_FAILURE; }
+    { print_err("Unable to connect to '%s:%ld'", data->host, data->port); return EXIT_FAILURE; }
 
   return EXIT_SUCCESS;
 }
@@ -84,11 +84,11 @@ int send_data(struct message * data, int * sock)
     return EXIT_FAILURE;
   msg[0] = data->criteria;
   msg[1] = '\n';
-  strncpy(&msg[2], data->criteria_data, sizeof(char) * BUFSIZE - strlen(msg));
+  strcat(msg, data->criteria_data);
   msg[strlen(msg)] = '\n';
-  strncpy(&msg[strlen(msg)], \
-          data->info, \
-          sizeof(char) * BUFSIZE - strlen(msg));
+  strcat(msg, data->info);
+
+  printf("\n\n----\n%s\n-----------\n", msg);
 
   if (write(*sock, msg, strlen(msg)+1) < 0)
     return EXIT_FAILURE;
