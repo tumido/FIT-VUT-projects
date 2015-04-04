@@ -13,14 +13,10 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include <arpa/inet.h>
-#include <ctype.h>
-#include <inttypes.h>
-#include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <sys/wait.h>
+#include <netdb.h>
 #include <unistd.h>
 
 #include "io.h"
@@ -40,7 +36,9 @@
 
 
 int parse_arguments(int argc, char * argv[], struct message * data);
-
+int establish_connection(struct message * data, int * sock);
+int send_data(struct message * data, int * sock);
+int get_respond();
 
 int main (int argc, char * argv[])
 {
@@ -48,8 +46,52 @@ int main (int argc, char * argv[])
   if (parse_arguments(argc, argv, &data) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
-  
+  int sock;
+  if (establish_connection(&data, &sock) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
 
+  send_data(&data, &sock);
+
+  return EXIT_SUCCESS;
+}
+
+int establish_connection(struct message * data, int * sock)
+{
+  struct sockaddr_in socket_in;
+  struct hostent * host_ptr;
+
+  if ((*sock = socket(PF_INET, SOCK_STREAM, 0)) < 0)
+    { print_err("Unable to create socket"); return EXIT_FAILURE; }
+
+  socket_in.sin_family = PF_INET;
+  socket_in.sin_port = htons(data->port);
+
+  if ((host_ptr = gethostbyname(data->host)) == NULL)
+    { print_err("Host not found"); return EXIT_FAILURE; }
+
+  memcpy(&socket_in.sin_addr, host_ptr->h_addr_list[0], host_ptr->h_length);
+
+  if (connect(*sock, (struct sockaddr *) &socket_in, sizeof(socket_in)) < 0)
+    { print_err("Unable to connect"); return EXIT_FAILURE; }
+
+  return EXIT_SUCCESS;
+}
+
+int send_data(struct message * data, int * sock)
+{
+  char * msg = NULL;
+  if ((msg = (char *) malloc(sizeof(char) * BUFSIZE)) == NULL) // +5 pro oddelovace
+    return EXIT_FAILURE;
+  msg[0] = data->criteria;
+  msg[1] = '\n';
+  strncpy(&msg[2], data->criteria_data, sizeof(char) * BUFSIZE - strlen(msg));
+  msg[strlen(msg)] = '\n';
+  strncpy(&msg[strlen(msg)], \
+          data->info, \
+          sizeof(char) * BUFSIZE - strlen(msg));
+
+  if (write(*sock, msg, strlen(msg)+1) < 0)
+    return EXIT_FAILURE;
   return EXIT_SUCCESS;
 }
 
@@ -71,7 +113,7 @@ int parse_arguments(int argc, char * argv[], struct message * data)
     if (argv[i][0] != '-' || argv[i][1] == '\0') // volba musi zacinat '-' a nesmi byt prazdna
     {
       valid = false;
-      msg = "parameter should start with '-'";
+      msg = "parameter should start with '-' and should contain some option";
       break;
     }
     switch (argv[i][1])
