@@ -160,7 +160,7 @@ int form_response(char * in, char ** out)
     pw = get_next_user(&endptr, in[0] == 'u', in[0] =='u' ? (void *) &uid : &uname_ptr);
     if (pw == NULL)
     {
-      strcat(*out, "Unable to find user ");
+      strcat(*out, "\fERROR: Unable to find user ");
       if(in[0] == 'u')
       {
         sprintf(integer, "%d", uid);
@@ -168,10 +168,13 @@ int form_response(char * in, char ** out)
       }
       else
         strcat(*out, uname_ptr);
+      strcat(*out, "\n\f");
     }
     else
+    {
       get_data_for_user(out, pw, in[1]);
-    strcat(*out, "\n");
+      strcat(*out, "\n");
+    }
   }
   return EXIT_SUCCESS;
 }

@@ -42,6 +42,7 @@ int parse_arguments(int argc, char * argv[], struct keep_data * data);
 int establish_connection(struct keep_data * data, int * sock);
 int send_data(struct message * msg_to_send, int * sock);
 int get_respose(int * sock, char ** buffer);
+void print_result(char * buffer);
 
 int main (int argc, char * argv[])
 {
@@ -60,7 +61,7 @@ int main (int argc, char * argv[])
   if (get_respose(&sock, &buffer) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
-  fprintf(stdout, "%s", buffer);
+  print_result(buffer);
 
   close(sock);
   return EXIT_SUCCESS;
@@ -221,4 +222,16 @@ int parse_arguments(int argc, char * argv[], struct keep_data * data)
     return EXIT_FAILURE;
   }
   return EXIT_SUCCESS;
+}
+
+void print_result(char * buffer)
+{
+  struct _IO_FILE * current_fd = stdout;
+  for(unsigned long i = 0; buffer[i] != '\0'; i++)
+  {
+    if (buffer[i] == '\f')
+      current_fd = (current_fd == stdout) ? stderr : stdout;
+    else
+      fputc(buffer[i], current_fd);
+  }
 }
