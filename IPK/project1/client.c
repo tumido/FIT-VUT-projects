@@ -16,11 +16,14 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <netdb.h>
 #include <unistd.h>
 
 #include "io.h"
 #include "socket.h"
+
+#define TIMEOUT 5
 
 /*
  *   client -> server:
@@ -38,7 +41,7 @@
 int parse_arguments(int argc, char * argv[], struct keep_data * data);
 int establish_connection(struct keep_data * data, int * sock);
 int send_data(struct message * msg_to_send, int * sock);
-int get_respond();
+int get_respose(int * sock, char ** buffer);
 
 int main (int argc, char * argv[])
 {
@@ -50,8 +53,16 @@ int main (int argc, char * argv[])
   if (establish_connection(&data, &sock) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
-  send_data(&data.msg, &sock);
+  if (send_data(&data.msg, &sock) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
 
+  char * buffer = NULL;
+  if (get_respose(&sock, &buffer) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  fprintf(stdout, "%s", buffer);
+
+  close(sock);
   return EXIT_SUCCESS;
 }
 
@@ -96,7 +107,23 @@ int send_data(struct message * msg_to_send, int * sock)
   free(msg);
   return EXIT_SUCCESS;
 }
+int get_respose(int * sock, char ** buffer)
+{
+  int len = 0;
+  int countdown = TIMEOUT;
+  while (!len && countdown > 0 && ioctl(*sock, FIONREAD, &len) >= 0)
+    {countdown--; sleep(1); }
+  
+  if (len <= 0) { print_err("No reply recieved"); return EXIT_FAILURE; }
 
+  if ((*buffer = (char *) malloc(sizeof(char) * len) ) == NULL)
+    return EXIT_FAILURE;
+
+
+  if (read(*sock, *buffer, len) < 0)
+    { print_err("Failed to read respond"); return EXIT_FAILURE; }
+  return EXIT_SUCCESS;
+}
 int parse_arguments(int argc, char * argv[], struct keep_data * data)
 {
   bool valid = true;
@@ -128,7 +155,7 @@ int parse_arguments(int argc, char * argv[], struct keep_data * data)
         else
         {
           data->port = strtol(argv[i +1], &endptr, 10);
-          if (*endptr != '\0') { valid = false; printf("%s", endptr); msg = "not a port number"; }
+          if (*endptr != '\0') { valid = false; msg = "not a port number"; }
           value = true;
         }
         break;

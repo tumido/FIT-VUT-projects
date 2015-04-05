@@ -31,8 +31,9 @@ int parse_arguments(int argc, char * argv[], long * port);
 int create_listener(int * socket_invite, struct sockaddr_in * socket_in, long * port);
 int accept_connection(int * socket_invite, struct sockaddr_in * socket_in);
 int reply(int socket_data);
-int form_response(char * in, char * out);
-void get_data_for_user(char * dst, struct passwd * pw, char options);
+int form_response(char * in, char ** out);
+void get_data_for_user(char ** dst, struct passwd * pw, char options);
+struct passwd * get_next_user(char ** endptr, bool uid_or_name, void * user);
 
 /*   Main
  * ---------------------------------------------------------------------
@@ -128,7 +129,7 @@ int reply(int socket_data)
 //  return EXIT_SUCCESS;
 
   char * response = NULL;
-  if (form_response(buffer, response) != EXIT_SUCCESS) return EXIT_FAILURE;
+  if (form_response(buffer, &response) != EXIT_SUCCESS) return EXIT_FAILURE;
 
   if (write(socket_data, response, strlen(response)) < 0)
     { print_err("Server PID(%d): Unable to send data back to client", getpid());
@@ -139,53 +140,92 @@ int reply(int socket_data)
   return EXIT_SUCCESS;
 }
 
-int form_response(char * in, char * out)
+int form_response(char * in, char ** out)
 {
+  if (*out == NULL)
+  {
+    if ((*out = (char *) calloc(BUFSIZE, sizeof(char))) == NULL)
+      return EXIT_FAILURE;
+  }
+
   char * endptr = &in[2];
   struct passwd * pw = NULL;
-  if (in[0] == 'u') // by uid
+  uid_t uid = 0;
+  char uname[BUFSIZE];
+  char * uname_ptr = &uname[0];
+  char integer[sizeof(int)];
+
+  while (*endptr != '\0')
   {
-    uid_t uid = 0;
-    while (*endptr != '\0')
+    pw = get_next_user(&endptr, in[0] == 'u', in[0] =='u' ? (void *) &uid : &uname_ptr);
+    if (pw == NULL)
     {
-      uid = strtol(endptr, &endptr, 10);
-      pw  = getpwuid(uid);
-      if (pw == NULL)
-        printf("User %d not found\n", uid);
+      strcat(*out, "Unable to find user ");
+      if(in[0] == 'u')
+      {
+        sprintf(integer, "%d", uid);
+        strcat(*out, integer);
+      }
       else
-        get_data_for_user(out, pw, in[1]);
+        strcat(*out, uname_ptr);
     }
-  }
-  else // by user name
-  {
-    char * uname;
-    while ( *endptr != '\0')
-    {
-      uname = strtok_r(endptr, " ",&endptr);
-      pw  = getpwnam(uname);
-      if (pw == NULL)
-        printf("User %s not found\n", uname);
-      else
-        get_data_for_user(out, pw, in[1]);
-    }
+    else
+      get_data_for_user(out, pw, in[1]);
+    strcat(*out, "\n");
   }
   return EXIT_SUCCESS;
 }
-
-void get_data_for_user(char * dst, struct passwd * pw, char options)
+struct passwd * get_next_user(char ** endptr, bool uid_or_name, void * user)
 {
+  if (uid_or_name)
+  {
+    *(uid_t *) user = strtol(*endptr, endptr, 10);
+    return getpwuid(*(uid_t *) user);
+  }
+  else
+  {
+    *(char **) user = strtok_r(*endptr, " ",endptr);
+    return getpwnam(*(char **) user);
+  }
+  return NULL;
+}
+
+void get_data_for_user(char ** dst, struct passwd * pw, char options)
+{
+  bool c = true;
+  char integer[sizeof(int)];
   if ((options >> 5) & 1) // option L
-    printf("name:  %s\n", pw->pw_name);
+  {
+    if (c) c = false; else strcat(*dst , " ");
+    strcat(*dst, pw->pw_name);
+  }
   if ((options >> 4) & 1) // option U
-    printf("uid:   %d\n", pw->pw_uid);
+  {
+    if (c) c = false; else strcat(*dst , " ");
+    sprintf(integer, "%d", pw->pw_uid);
+    strcat(*dst, integer);
+  }
   if ((options >> 3) & 1) // option G
-    printf("gid:   %d\n", pw->pw_gid);
+  {
+    if (c) c = false; else strcat(*dst , " ");
+    sprintf(integer, "%d", pw->pw_gid);
+    strcat(*dst, integer);
+  }
   if ((options >> 2) & 1) // option N
-    printf("gecos: %s\n", pw->pw_gecos);
+  {
+    if (c) c = false; else strcat(*dst , " ");
+    strcat(*dst, pw->pw_gecos);
+  }
   if ((options >> 1) & 1) // option H
-    printf("dir:   %s\n", pw->pw_dir);
+  {
+    if (c) c = false; else strcat(*dst , " ");
+    strcat(*dst, pw->pw_dir);
+  }
   if ( options       & 1) // option J
-    printf("shell: %s\n", pw->pw_shell);
+  {
+    if (c) c = false; else strcat(*dst , " ");
+    strcat(*dst, pw->pw_shell);
+  }
   return;
 }
 
