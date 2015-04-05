@@ -30,8 +30,8 @@
  *   client -> server:
  * ---------------------------------------------------------------------
  * mode: u|l
- * mode_data: usernames | UIDs
  * data_format: L N G...
+ * mode_data: usernames | UIDs
  *
  *   server -> client:
  * ---------------------------------------------------------------------
@@ -39,6 +39,10 @@
  * stderr parts are separated by '\f' delimiters
  */
 
+/*
+ *  Prototypes
+ * ---------------------------------------------------------------------
+ */
 
 int parse_arguments(int argc, char * argv[], struct keep_data * data);
 int establish_connection(struct keep_data * data, int * sock);
@@ -46,6 +50,11 @@ int send_data(struct message * msg_to_send, int * sock);
 int get_respose(int * sock, char ** buffer);
 void print_result(char * buffer);
 
+/*
+ *   Main
+ * ---------------------------------------------------------------------
+ *  - just a wrapper over the inpotrant functions, as ussual
+ */
 int main (int argc, char * argv[])
 {
   struct keep_data data;
@@ -69,6 +78,13 @@ int main (int argc, char * argv[])
   return EXIT_SUCCESS;
 }
 
+/*
+ *   Establish connection
+ * ---------------------------------------------------------------------
+ * - function responsible for creating socket and connection to distant
+ *   host
+ * - takes parsed data like hostame and port nr. and hooks socket to them
+ */
 int establish_connection(struct keep_data * data, int * sock)
 {
   struct sockaddr_in socket_in;
@@ -91,11 +107,18 @@ int establish_connection(struct keep_data * data, int * sock)
   return EXIT_SUCCESS;
 }
 
+/*
+ *   Send Data
+ * ---------------------------------------------------------------------
+ * - as the name implicates, this transforms data in structure to
+ *   message that is sent to the server
+ * - data are in this order MOD[1]E | OPTIONS[6] | DATA[n]
+ */
 int send_data(struct message * msg_to_send, int * sock)
 {
   char * msg = NULL;
   if ((msg = (char *) malloc(sizeof(char) * BUFSIZE + sizeof(int))) == NULL)
-    // first two CHARs are mode (u|l) and options
+    // first CHARs are mode (u|l) and options
     return EXIT_FAILURE;
   msg[0] = msg_to_send->mode;
   strcpy(&msg[1], msg_to_send->options);
@@ -112,6 +135,13 @@ int send_data(struct message * msg_to_send, int * sock)
   free(msg);
   return EXIT_SUCCESS;
 }
+
+/*
+ *   Get Response
+ * ---------------------------------------------------------------------
+ * - listens for the response for some time - limited by TIMEOUT
+ * - pushes data to a buffer, doesn't care what data it is
+ */
 int get_respose(int * sock, char ** buffer)
 {
   int len = 0;
@@ -129,6 +159,15 @@ int get_respose(int * sock, char ** buffer)
     { print_err("Failed to read respond"); return EXIT_FAILURE; }
   return EXIT_SUCCESS;
 }
+
+/*  Parse Arguments
+ * ---------------------------------------------------------------------
+ * - a huge argument parser
+ * - has to deal with all argument acording to synopsis
+ * - OPTIONS can be given both long and shor forms
+ *   CRITERIA is not limited by length, just UIDs has to be numbers
+ *   HOST and PORT has to be parsed also
+ */
 int parse_arguments(int argc, char * argv[], struct keep_data * data)
 {
   bool valid = true;
@@ -229,6 +268,12 @@ int parse_arguments(int argc, char * argv[], struct keep_data * data)
   return EXIT_SUCCESS;
 }
 
+/*
+ *  Print Result
+ * ---------------------------------------------------------------------
+ * - print function that checkes the data and when it caches the control
+ *   character to swithc between STDOUT and STDERR it does so
+ */
 void print_result(char * buffer)
 {
   FILE * current_fd = stdout;

@@ -21,14 +21,14 @@ struct message
 {
   char mode; // mode 'u' for UID or 'l' for login
   char data[BUFSIZE]; // list of UIDs or logins
-  char options[7]; // experimentaly encoded options ->
-  // each bit represents one option in this order: L U G N H S
-  //                                               | | | | | +- shell
-  //                                               | | | | +- home folder
-  //                                               | | | +- gecos
-  //                                               | | +- GID
-  //                                               | +- UID
-  //                                               +- username
+  char options[7];
+  // each char represents one option: L U G N H S
+  //                                  | | | | | +- shell
+  //                                  | | | | +- home folder
+  //                                  | | | +- gecos
+  //                                  | | +- GID
+  //                                  | +- UID
+  //                                  +- username
 };
 
 struct keep_data

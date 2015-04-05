@@ -31,6 +31,10 @@
 #include "io.h"
 #include "socket.h"
 
+/*
+ *  Prototypes
+ * ---------------------------------------------------------------------
+ */
 int parse_arguments(int argc, char * argv[], long * port);
 int create_listener(int * socket_invite, struct sockaddr_in * socket_in, long * port);
 int accept_connection(int * socket_invite, struct sockaddr_in * socket_in);
@@ -39,6 +43,10 @@ int form_response(char * in, char * out);
 void get_data_for_user(char * dst, struct passwd * pw, char * options);
 struct passwd * get_next_user(char ** endptr, bool uid_or_name, void * user);
 
+/*
+ *   Functions responsible for ending live of this program
+ * ---------------------------------------------------------------------
+ */
 void term_children_and_exit()
 {
   kill(0, SIGTERM);
@@ -142,6 +150,13 @@ int accept_connection(int * socket_invite, struct sockaddr_in * socket_in)
   }
 }
 
+/*
+ *   Reply
+ * ---------------------------------------------------------------------
+ * - function responsible for responding to the message sent by client
+ * - creates buffer where the respond is stored, loads data to the buffer
+ *   and then writes them to the socket
+ */
 int reply(int socket_data)
 {
   int len = 0;
@@ -171,6 +186,11 @@ int reply(int socket_data)
   return EXIT_SUCCESS;
 }
 
+/*
+ *   Create response
+ * ---------------------------------------------------------------------
+ * - forms the response and fill it (the buffer) with sedignated data
+ */
 int form_response(char * in, char * out)
 {
   char * endptr = &in[7];
@@ -207,6 +227,11 @@ int form_response(char * in, char * out)
   }
   return EXIT_SUCCESS;
 }
+
+/*
+ *   Minor helper function for searching the user in /etc/passwd
+ * ---------------------------------------------------------------------
+ */
 struct passwd * get_next_user(char ** endptr, bool uid_or_name, void * user)
 {
   struct passwd * pw;
@@ -224,6 +249,10 @@ struct passwd * get_next_user(char ** endptr, bool uid_or_name, void * user)
   return NULL;
 }
 
+/*
+ *   Minor helper function for retrieving info about searched user
+ * ---------------------------------------------------------------------
+ */
 void get_data_for_user(char * dst, struct passwd * pw, char * options)
 {
   bool c = true;
@@ -261,6 +290,11 @@ void get_data_for_user(char * dst, struct passwd * pw, char * options)
   return;
 }
 
+/*
+ *   Parse arguments
+ * ---------------------------------------------------------------------
+ * - parses PORT number
+ */
 int parse_arguments(int argc, char * argv[], long * port)
 {
   char * endptr = NULL;
