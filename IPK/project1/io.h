@@ -22,6 +22,7 @@
 #include <stdarg.h>
 #include <string.h>
 
+
 /*   print_err
  * ---------------------------------------------------------------------
  * - funkce pro vypsani chyboveho hlaseni na stderr
@@ -32,9 +33,6 @@ void print_help();
 
 void add_to_info(char * dst, char src);
 void add_to_criteria(char * dst, char * src, unsigned long bufsize);
-#ifdef DEBUG
-void printDebug(const char * ftm, ...);
-#endif
 
 
 #endif

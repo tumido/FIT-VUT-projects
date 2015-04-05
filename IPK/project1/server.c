@@ -22,14 +22,17 @@
 #include <signal.h>
 #include <sys/ioctl.h>
 
+#include <pwd.h>
+
 #include "io.h"
 #include "socket.h"
 
 int parse_arguments(int argc, char * argv[], long * port);
 int create_listener(int * socket_invite, struct sockaddr_in * socket_in, long * port);
 int accept_connection(int * socket_invite, struct sockaddr_in * socket_in);
-int reply(int * socket_data);
+int reply(int socket_data);
 int form_response(char * in, char * out);
+void get_data_for_user(char * dst, struct passwd * pw, char options);
 
 /*   Main
  * ---------------------------------------------------------------------
@@ -101,7 +104,7 @@ int accept_connection(int * socket_invite, struct sockaddr_in * socket_in)
     if (whoami == 0) // I'm my own child
     {
       close(*socket_invite);
-      exit(reply(&socket_data));
+      exit(reply(socket_data));
     }
     else // I'm parent
     {
@@ -110,16 +113,16 @@ int accept_connection(int * socket_invite, struct sockaddr_in * socket_in)
   }
 }
 
-int reply(int *socket_data)
+int reply(int socket_data)
 {
   int len = 0;
-  ioctl(*socket_data, FIONREAD, &len);
+  ioctl(socket_data, FIONREAD, &len);
   if (len <= 0) return EXIT_FAILURE;
 
   char * buffer = NULL;
   if ((buffer = (char *) malloc(sizeof(char) * len) ) == NULL)
     return EXIT_FAILURE;
-  read(*socket_data, buffer, len);
+  read(socket_data, buffer, len);
 
 //  printf("Process of PID %d recieved data from client:\nmode:%c\noptions:%d\ndata:%s\n", getpid(), buffer[0], buffer[1], &buffer[2]);
 //  return EXIT_SUCCESS;
@@ -127,34 +130,63 @@ int reply(int *socket_data)
   char * response = NULL;
   if (form_response(buffer, response) != EXIT_SUCCESS) return EXIT_FAILURE;
 
-  if (write(*socket_data, response, strlen(response)) < 0)
+  if (write(socket_data, response, strlen(response)) < 0)
     { print_err("Server PID(%d): Unable to send data back to client", getpid());
       return EXIT_FAILURE; }
 
-  close(*socket_data);
+  close(socket_data);
   free(buffer);
   return EXIT_SUCCESS;
 }
 
 int form_response(char * in, char * out)
 {
-  char * endptr = NULL;
-  char * input_data = &in[2];
-  if (in[0] == 'u')
+  char * endptr = &in[2];
+  struct passwd * pw = NULL;
+  if (in[0] == 'u') // by uid
   {
     uid_t uid = 0;
-    while (*input_data != '\0')
+    while (*endptr != '\0')
     {
-      uid = strtol(input_data, &endptr, 10);
-      printf("%d\n", uid);
-      input_data = endptr;
+      uid = strtol(endptr, &endptr, 10);
+      pw  = getpwuid(uid);
+      if (pw == NULL)
+        printf("User %d not found\n", uid);
+      else
+        get_data_for_user(out, pw, in[1]);
     }
   }
-  else
+  else // by user name
   {
-    
+    char * uname;
+    while ( *endptr != '\0')
+    {
+      uname = strtok_r(endptr, " ",&endptr);
+      pw  = getpwnam(uname);
+      if (pw == NULL)
+        printf("User %s not found\n", uname);
+      else
+        get_data_for_user(out, pw, in[1]);
+    }
   }
   return EXIT_SUCCESS;
+}
+
+void get_data_for_user(char * dst, struct passwd * pw, char options)
+{
+  if ((options >> 5) & 1) // option L
+    printf("name:  %s\n", pw->pw_name);
+  if ((options >> 4) & 1) // option U
+    printf("uid:   %d\n", pw->pw_uid);
+  if ((options >> 3) & 1) // option G
+    printf("gid:   %d\n", pw->pw_gid);
+  if ((options >> 2) & 1) // option N
+    printf("gecos: %s\n", pw->pw_gecos);
+  if ((options >> 1) & 1) // option H
+    printf("dir:   %s\n", pw->pw_dir);
+  if ( options       & 1) // option J
+    printf("shell: %s\n", pw->pw_shell);
+  return;
 }
 
 int parse_arguments(int argc, char * argv[], long * port)
