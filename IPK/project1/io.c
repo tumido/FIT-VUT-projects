@@ -41,27 +41,11 @@ void print_help()
 
 void add_to_info(char * dst, char src)
 {
-  switch (src)
+  for (int i = 0; i < 6; i++) // we got six possible options
   {
-    case 'L':
-      *dst =  *dst | (1 << 5);
-      break;
-    case 'U':
-      *dst =  *dst | (1 << 4);
-      break;
-    case 'G':
-      *dst =  *dst | (1 << 3);
-      break;
-    case 'N':
-      *dst =  *dst | (1 << 2);
-      break;
-    case 'H':
-      *dst =  *dst | (1 << 1);
-      break;
-    case 'S':
-      *dst =  *dst | 1;
-      break;
-    default:
+    if (dst[i] == '\0')
+      { dst[i] = src; break; }
+    if (dst[i] == src)
       break;
   }
   return;

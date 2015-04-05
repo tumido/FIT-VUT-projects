@@ -21,7 +21,7 @@ struct message
 {
   char mode; // mode 'u' for UID or 'l' for login
   char data[BUFSIZE]; // list of UIDs or logins
-  char options; // experimentaly encoded options ->
+  char options[7]; // experimentaly encoded options ->
   // each bit represents one option in this order: L U G N H S
   //                                               | | | | | +- shell
   //                                               | | | | +- home folder

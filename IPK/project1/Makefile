@@ -17,7 +17,7 @@
 #    Deklarace promenych
 #  ---------------------------------------------------------------------
 CC = gcc
-CFLAGS = -std=c99 -pedantic -Wall -Werror
+CFLAGS = -std=c99 -pedantic -Wall -Werror -g
 PROGS = client server
 #    Pravidla pro jednotlive programy
 #  ---------------------------------------------------------------------
@@ -35,10 +35,12 @@ client: client.c io.o
 #    Doplnkove funkce
 #  ---------------------------------------------------------------------
 clean:
-	rm -vf *.o *.a *.so $(PROGS)
+	rm -vf *.o *.a *.so *.tar.gz $(PROGS)
 
+tar:
+	tar czfv xcoufa09.tar.gz *.c *.h Makefile
 zip:
-	zip xcoufa09.zip *.c Makefile
+	zip xcoufa09.zip *.c *.h Makefile
 
 # $@ - (cil) jmeno vystupu
 # $< - (zdroj) vstup

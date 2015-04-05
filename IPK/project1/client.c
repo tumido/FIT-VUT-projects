@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <ctype.h>
 
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -23,7 +24,7 @@
 #include "io.h"
 #include "socket.h"
 
-#define TIMEOUT 5
+#define TIMEOUT 10
 
 /*
  *   client -> server:
@@ -35,6 +36,7 @@
  *   server -> client:
  * ---------------------------------------------------------------------
  * data stream -> directly to stdout
+ * stderr parts are separated by '\f' delimiters
  */
 
 
@@ -92,16 +94,18 @@ int establish_connection(struct keep_data * data, int * sock)
 int send_data(struct message * msg_to_send, int * sock)
 {
   char * msg = NULL;
-  if ((msg = (char *) malloc(sizeof(char) * (strlen(msg_to_send->data) + 2))) == NULL)
+  if ((msg = (char *) malloc(sizeof(char) * BUFSIZE + sizeof(int))) == NULL)
     // first two CHARs are mode (u|l) and options
     return EXIT_FAILURE;
   msg[0] = msg_to_send->mode;
-  msg[1] = msg_to_send->options;
-  strcpy(&msg[2], msg_to_send->data);
+  strcpy(&msg[1], msg_to_send->options);
 
-  int len = strlen(msg);
-  if (len == 1) // non of options is specified (weakness of the protocol)
-    len += strlen(&msg[2]);
+  for (int i = 0; i < BUFSIZE && msg_to_send->data[i] !='\0' ; i++)
+    msg_to_send->data[i] = tolower(msg_to_send->data[i]);
+
+  strcpy(&msg[7], msg_to_send->data);
+
+  int len = strlen(&msg[7]) + 7; // 7 command bytes on top (made and options)
 
   if (write(*sock, msg, len+1) < 0)
     { free(msg); return EXIT_FAILURE; }
@@ -130,7 +134,8 @@ int parse_arguments(int argc, char * argv[], struct keep_data * data)
   bool valid = true;
   bool value = false;
   char * endptr = NULL;
-  data->host[0] = data->msg.mode = data->msg.data[0] = data->msg.options = '\0';
+  data->host[0] = data->msg.mode = data->msg.data[0] = '\0';
+  for (int i = 0; i < (int) sizeof(data->msg.options); i++) data->msg.options[i] = '\0';
   data->port = -1;
   char mode = '\0';
   char * msg = "syntax si not valid";
@@ -195,13 +200,13 @@ int parse_arguments(int argc, char * argv[], struct keep_data * data)
         }
         break;
       case 'L': case 'U': case 'G': case 'N': case 'H': case 'S': // data
-        add_to_info(&(data->msg.options), argv[i][1]);
+        add_to_info(&data->msg.options[0], argv[i][1]);
         for (int j = 2; argv[i][j] != '\0'; j++)
         {
           switch (argv[i][j])
           {
             case 'L': case 'U': case 'G': case 'N': case 'H': case 'S': // data
-              add_to_info(&(data->msg.options), argv[i][j]);
+              add_to_info(&data->msg.options[0], argv[i][j]);
               break;
             default:
               valid = false;
@@ -226,7 +231,7 @@ int parse_arguments(int argc, char * argv[], struct keep_data * data)
 
 void print_result(char * buffer)
 {
-  struct _IO_FILE * current_fd = stdout;
+  FILE * current_fd = stdout;
   for(unsigned long i = 0; buffer[i] != '\0'; i++)
   {
     if (buffer[i] == '\f')
