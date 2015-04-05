@@ -30,7 +30,7 @@ void print_err(const char * ftm, ...);
 
 void print_help();
 
-void add_to_info(char * dst, unsigned long bufsize, char src);
+void add_to_info(char * dst, char src);
 void add_to_criteria(char * dst, char * src, unsigned long bufsize);
 #ifdef DEBUG
 void printDebug(const char * ftm, ...);

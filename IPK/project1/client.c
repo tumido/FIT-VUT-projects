@@ -35,14 +35,14 @@
  */
 
 
-int parse_arguments(int argc, char * argv[], struct message * data);
-int establish_connection(struct message * data, int * sock);
-int send_data(struct message * data, int * sock);
+int parse_arguments(int argc, char * argv[], struct keep_data * data);
+int establish_connection(struct keep_data * data, int * sock);
+int send_data(struct message * msg_to_send, int * sock);
 int get_respond();
 
 int main (int argc, char * argv[])
 {
-  struct message data;
+  struct keep_data data;
   if (parse_arguments(argc, argv, &data) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
@@ -50,12 +50,12 @@ int main (int argc, char * argv[])
   if (establish_connection(&data, &sock) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
-  send_data(&data, &sock);
+  send_data(&data.msg, &sock);
 
   return EXIT_SUCCESS;
 }
 
-int establish_connection(struct message * data, int * sock)
+int establish_connection(struct keep_data * data, int * sock)
 {
   struct sockaddr_in socket_in;
   struct hostent * host_ptr;
@@ -77,30 +77,32 @@ int establish_connection(struct message * data, int * sock)
   return EXIT_SUCCESS;
 }
 
-int send_data(struct message * data, int * sock)
+int send_data(struct message * msg_to_send, int * sock)
 {
   char * msg = NULL;
-  if ((msg = (char *) malloc(sizeof(char) * BUFSIZE)) == NULL) // +5 pro oddelovace
+  if ((msg = (char *) malloc(sizeof(char) * (strlen(msg_to_send->data) + 2))) == NULL)
+    // first two CHARs are mode (u|l) and options
     return EXIT_FAILURE;
-  msg[0] = data->criteria;
-  msg[1] = '\n';
-  strcat(msg, data->criteria_data);
-  msg[strlen(msg)] = '\n';
-  strcat(msg, data->info);
+  msg[0] = msg_to_send->mode;
+  msg[1] = msg_to_send->options;
+  strcpy(&msg[2], msg_to_send->data);
 
-  printf("\n\n----\n%s\n-----------\n", msg);
+  int len = strlen(msg);
+  if (len == 1) // non of options is specified (weakness of the protocol)
+    len += strlen(&msg[2]);
 
-  if (write(*sock, msg, strlen(msg)+1) < 0)
-    return EXIT_FAILURE;
+  if (write(*sock, msg, len+1) < 0)
+    { free(msg); return EXIT_FAILURE; }
+  free(msg);
   return EXIT_SUCCESS;
 }
 
-int parse_arguments(int argc, char * argv[], struct message * data)
+int parse_arguments(int argc, char * argv[], struct keep_data * data)
 {
   bool valid = true;
   bool value = false;
   char * endptr = NULL;
-  data->host[0] = data->criteria = data->criteria_data[0] = data->info[0] = '\0';
+  data->host[0] = data->msg.mode = data->msg.data[0] = data->msg.options = '\0';
   data->port = -1;
   char mode = '\0';
   char * msg = "syntax si not valid";
@@ -148,9 +150,9 @@ int parse_arguments(int argc, char * argv[], struct message * data)
           { valid = false; msg = "criteria not specified or valid"; }
         else
         {
-          mode = data->criteria = argv[i][1];
-          for (unsigned long k = 0; k < sizeof(data->criteria_data); k++)
-            data->criteria_data[k] = '\0';
+          mode = data->msg.mode = argv[i][1];
+          for (unsigned long k = 0; k < BUFSIZE; k++)
+            data->msg.data[k] = '\0';
           while (i < argc - 1 && argv[i + 1][0] != '-')
           {
             if (mode == 'u')
@@ -159,19 +161,19 @@ int parse_arguments(int argc, char * argv[], struct message * data)
               if (*endptr != '\0')
                 { valid = false; msg = "UID is not a number"; break; }
             }
-            add_to_criteria(data->criteria_data, argv[i+1], sizeof(data->criteria_data));
+            add_to_criteria(data->msg.data, argv[i+1], sizeof(data->msg.data));
             i++;
           }
         }
         break;
       case 'L': case 'U': case 'G': case 'N': case 'H': case 'S': // data
-        add_to_info(&(data->info[0]), sizeof(data->info), argv[i][1]);
+        add_to_info(&(data->msg.options), argv[i][1]);
         for (int j = 2; argv[i][j] != '\0'; j++)
         {
           switch (argv[i][j])
           {
             case 'L': case 'U': case 'G': case 'N': case 'H': case 'S': // data
-              add_to_info(&(data->info[0]), sizeof(data->info), argv[i][j]);
+              add_to_info(&(data->msg.options), argv[i][j]);
               break;
             default:
               valid = false;

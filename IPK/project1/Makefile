@@ -19,16 +19,15 @@
 CC = gcc
 CFLAGS = -std=c99 -pedantic -Wall -Werror
 PROGS = client server
-OBJECTS = io.o
 #    Pravidla pro jednotlive programy
 #  ---------------------------------------------------------------------
 all: $(PROGS)
 
-server: server.c $(OBJECTS)
-	$(CC) $(CFLAGS) $^ -o $@
+server: server.c io.o
+	$(CC) $(CFLAGS) -pthread server.c io.o -o $@
 
-client: client.c $(OBJECTS)
-	$(CC) $(CFLAGS) $^ -o $@
+client: client.c io.o
+	$(CC) $(CFLAGS) client.c io.o -o $@
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $^ -o $@

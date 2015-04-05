@@ -11,15 +11,31 @@
 #define SOCKET_INCLUDED
 
 #define BUFSIZE 2048
-#define BUFSIZE_HALF 1024
-#define BUFSIZE_HOST 256
-#define BUFSIZE_SMALL 512 + 256
+#define BUFSIZE_SMALL 256
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 struct message
 {
-  char host [BUFSIZE_HOST];
-  long port;
-  char criteria;
-  char criteria_data [BUFSIZE_SMALL];
-  char info [BUFSIZE_HALF];
+  char mode; // mode 'u' for UID or 'l' for login
+  char data[BUFSIZE]; // list of UIDs or logins
+  char options; // experimentaly encoded options ->
+  // each bit represents one option in this order: L U G N H S
+  //                                               | | | | | +- shell
+  //                                               | | | | +- home folder
+  //                                               | | | +- gecos
+  //                                               | | +- GID
+  //                                               | +- UID
+  //                                               +- username
 };
+
+struct keep_data
+{
+  char host [BUFSIZE_SMALL];
+  long port;
+  struct message msg;
+};
+
 #endif
