@@ -38,9 +38,7 @@ clean:
 	rm -vf *.o *.a *.so *.tar.gz $(PROGS)
 
 tar:
-	tar czfv xcoufa09.tar.gz *.c *.h Makefile
-zip:
-	zip xcoufa09.zip *.c *.h Makefile
+	tar czfv xcoufa09.tar.gz *.c *.h Makefile *.pdf
 
 # $@ - (cil) jmeno vystupu
 # $< - (zdroj) vstup
