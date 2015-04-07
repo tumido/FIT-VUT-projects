@@ -27,6 +27,9 @@ Projects listed
 * ITY
     1. LaTeX basics
     2. Use LaTeX for math formulas
+    3. Pictures and tables
+* IPK
+    1. Client - Server application (client requests info  about an user and server responds what it is able to find in local `/etc/passwd`)
 
 Subjects not listed
 -------------------
