@@ -137,29 +137,23 @@ def find_in_file(name, mode):
                     state = 2 if char == '/' else 1
                 # suspected char
                 elif state == 2:
-                    state = 3 if char == '/' else 5 if char == '*' else 1
+                    state = 3 if char == '/' else 4 if char == '*' else 1
                 # in oneline comment (till eol)
                 elif state == 3:
                     occurs += 2  # doubleslash
-                    state = 4
-                # wait for eol
-                elif state == 4:
                     if char == '\n':
                         state = 1
                     else:
                         occurs += 1
                 # in possible multiline comment
-                elif state == 5:
-                    occurs += 2  # /* at the begining
-                    state = 6
-                elif state == 6:
+                elif state == 4:
+                    occurs += 2  # involve /* at the begining to sum
                     if char == '*':
-                        state = 7
-                    else:
-                        occurs += 1
-                elif state == 7:
-                    occurs += 2
-                    state = 1 if char == '/' else 6
+                        state = 5
+                    occurs += 1
+                elif state == 5:
+                    state = 1 if char == '/' else 5
+                    occurs += 1
 
         else:
             occurs = 5
@@ -206,27 +200,40 @@ def print_output(result_dict, output, remove_path):
     # compute the length of a line
     if result_dict == dict():
         return
+    # if no path is displayed remove it
+    new = dict()
+    for key, value in result_dict.items():
+        if remove_path:
+            key = key.split("/")[-1]
+        # add indexes to handle files with the same name
+        index = 0
+        while key + str(index) in new.keys():
+            index += 1
+        key = key + str(index)
+        new[key] = value
+
+    result_dict = new
+
+    # sort the ddictionary alphabeticaly
+    result_dict = OrderedDict(sorted(result_dict.items(), key=lambda t: t[0]))
 
     k_max = max([len(key) for key in result_dict.keys()])
     v_max = max([len(str(val)) for key, val in result_dict.items()])
     v_sum = sum([val for key, val in result_dict.items()])
-    line = k_max + max(v_max, len(str(v_sum))) + 1
-    # If you have any idea how to use the formating for this, ping me...
-    template = "{0}{1}{2}\n"
+
+    k_max = max(k_max - 1, len("CELKEM:"))
+    v_max = max(v_max, len(str(v_sum)))
+    # format string
+    template = "{0:" + str(k_max) + "} {1:>" + str(v_max) + "d}\n"
     buff = str()
 
     # add line for each file
-    result_dict = OrderedDict(sorted(result_dict.items(), key=lambda t: t[0]))
     for key, value in result_dict.items():
         if remove_path:
             key = key.split("/")[-1]
-        buff += template.format(key,
-                                " " * (line - len(key) - len(str(value))),
-                                str(value))
+        buff += template.format(key[:-1], value)
 
-    buff += template.format('CELKEM:',
-                            " " * (line - len("CELKEM:") - len(str(v_sum))),
-                            str(v_sum))
+    buff += template.format('CELKEM:', v_sum)
 
     # print it out
     if output:
