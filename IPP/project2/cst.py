@@ -16,7 +16,11 @@ KEYWORDS = ['auto', 'break', 'case', 'char', 'const', 'continue', 'default',
             'if', 'inline', 'int', 'long', 'register', 'restrict', 'return',
             'short', 'signed', 'sizeof', 'static', 'struct', 'switch',
             'typedef', 'union', 'unsigned', 'void', 'volatile', 'while']
-OPERATORS = []
+KEYWORDS = KEYWORDS + [key.upper() for key in KEYWORDS]
+OPERATORS = ['++', '--', '+', '-', '+=', '-=', '*', '*=', '/', '/=', '%',
+             '%=', '<', '<=', '>', '>=', '==', '!=', '!', '&&', '||', '<<',
+             '<<=', '>>', '>>=', '~', '&', '&=', '|', '|=', '^', '^=', '=',
+             '->', '.']
 
 ARGUMENT_ERROR = 1
 INPUT_FILE_ERROR = 2
@@ -241,7 +245,7 @@ def find_in_file(name, mode, error):
                         occurs = 0
                         # let's count IDENTIFICATORS - the rest, besides
                         # references and such
-                        occurs = len(re.findall('\w*', f.read()))
+                        occurs = len(re.findall('[a-zA-Z_]{1}\w*', f.read()))
 
         result[name] = occurs
     return result
@@ -254,7 +258,7 @@ def _list_dir(d, subdir):
         path = os.path.join(d, item)
         if subdir and os.path.isdir(path):
             l += _list_dir(path, subdir)
-        elif re.match('^.*\.[cChH]$', item):
+        elif re.match('^.*\.[ch]$', item):
             l.append(path)
     return l
 
