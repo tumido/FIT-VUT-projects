@@ -2,13 +2,14 @@
 
 # CST:xcoufa09
 
-from argparse import ArgumentParser
-from contextlib import contextmanager
-from collections import OrderedDict
 import traceback
 import os
 import re
 import sys
+from argparse import ArgumentParser
+from contextlib import contextmanager
+from collections import OrderedDict
+from io import StringIO
 
 KEYWORDS = ['auto', 'break', 'case', 'char', 'const', 'continue', 'default',
             'do', 'double', 'else', 'enum', 'extern', 'float', 'for', 'goto',
@@ -16,6 +17,11 @@ KEYWORDS = ['auto', 'break', 'case', 'char', 'const', 'continue', 'default',
             'short', 'signed', 'sizeof', 'static', 'struct', 'switch',
             'typedef', 'union', 'unsigned', 'void', 'volatile', 'while']
 OPERATORS = []
+
+ARGUMENT_ERROR = 1
+INPUT_FILE_ERROR = 2
+INPUT_SUBDIR_ERROR = 21
+OUTPUT_FILE_ERROR = 3
 
 
 class MyArgparse(ArgumentParser):
@@ -65,14 +71,23 @@ class MyArgparse(ArgumentParser):
 
         # shouldn't ever get here
         else:
-            self.error(_('unexpected option string: %s') % option_string)
+            self.error('unexpected option string: {0}'.format(option_string))
 
         # return the collected option tuples
         return result
 
+    def error(self, message):
+        self.exit(ARGUMENT_ERROR, '%s: error: %s\n' % (self.prog, message))
+
 
 @contextmanager
 def open_w_exit(filename, mode, exitcode):
+    """
+    Enhances "with open()" with sys.exit(exitcode)
+    :param filename: file to open
+    :param mode: specify if read, write, bytemode
+    :param exitcode: when exception is raised exit with gicen code
+    """
     try:
         f = open(filename, mode)
     except OSError:
@@ -120,43 +135,114 @@ def parse_args():
     return vars(parser.parse_args())
 
 
-def find_in_file(name, mode):
+def comments_strip(f):
+    """
+    Removes comments and returns count of characters
+    :param f: StringIO object to parse
+    :return occurs: number of chars in comments
+    :return content: StringIO object without comments
+    """
+    occurs = 0
+    state = 1
+    content = ''
+    for char in f.read():
+        # regual char
+        if state == 1:
+            if char == '/':
+                state = 2
+            else:
+                content += char
+        # suspected char
+        elif state == 2:
+            if char == '/':
+                state = 3
+            elif char == '*':
+                state = 4
+            else:
+                content += char
+        # in oneline comment (till eol)
+        elif state == 3:
+            occurs += 2  # doubleslash
+            if char == '\n':
+                state = 1
+            else:
+                occurs += 1
+        # in possible multiline comment
+        elif state == 4:
+            occurs += 2  # involve /* at the begining to sum
+            if char == '*':
+                state = 5
+            occurs += 1
+        elif state == 5:
+            state = 1 if char == '/' else 5
+            occurs += 1
+    return occurs, StringIO(content)
+
+
+def macro_strip(f):
+    content = ''
+    in_macro = False
+    for line in f.readlines():
+        if re.match('^#.*', line):
+            if re.match('.*\\\$', line):
+                in_macro = True
+        elif in_macro:
+            if not re.match('.*\\\$', line):
+                in_macro = False
+        else:
+            content += line
+
+    return StringIO(content)
+
+
+def keyw_strip(f):
+    content = ''
+    occurs = 0
+    for line in f.readlines():
+        for word in line.split():
+            if word in KEYWORDS:
+                occurs += 1
+            else:
+                content += word + ' '
+    return occurs, StringIO(content)
+
+
+def operat_strip(f):
+    content = ''
+    occurs = 0
+    return occurs, StringIO(content)
+
+
+def find_in_file(name, mode, error):
     result = dict()
     occurs = 0
-    with open_w_exit(name, 'r', 1) as f:
+    with open_w_exit(name, 'r', error) as f:
         # mode 'w' searches also in strings, macros and comments
         if mode['w']:
             for line in f.readlines():
                 occurs += len(re.findall(mode['w'], line))
-        # for 'c' comment count mode we need a small fsm
-        elif mode['c']:
-            state = 1
-            for char in f.read():
-                # regual char
-                if state == 1:
-                    state = 2 if char == '/' else 1
-                # suspected char
-                elif state == 2:
-                    state = 3 if char == '/' else 4 if char == '*' else 1
-                # in oneline comment (till eol)
-                elif state == 3:
-                    occurs += 2  # doubleslash
-                    if char == '\n':
-                        state = 1
-                    else:
-                        occurs += 1
-                # in possible multiline comment
-                elif state == 4:
-                    occurs += 2  # involve /* at the begining to sum
-                    if char == '*':
-                        state = 5
-                    occurs += 1
-                elif state == 5:
-                    state = 1 if char == '/' else 5
-                    occurs += 1
-
         else:
-            occurs = 5
+            # macros should be ignored
+            f = macro_strip(f)
+            # for 'c' comment count mode we need a small fsm
+            occurs, f = comments_strip(f)
+            # for c mode we're done, in other cases null the counter
+            if not args['c']:
+                occurs = 0
+                # let's count KEYWORDS
+                occurs, f = keyw_strip(f)
+                # we have counted keywords and removed them, if there is any
+                # other mode specified go on
+                if not args['k']:
+                    occurs = 0
+                    # let's count OPERATORS
+                    occurs, f = operat_strip(f)
+                    if not args['o']:
+                        occurs = 0
+                        # let's count IDENTIFICATORS - the rest, besides
+                        # references and such
+                        occurs = len(re.findall('\w*', f.read()))
+
         result[name] = occurs
     return result
 
@@ -186,7 +272,7 @@ def list_files(name, subdir):
         files += _list_dir(name, subdir)
     else:
         raise IOError("File or directory does not exist")
-        sys.exit(1)
+        sys.exit(INPUT_FILE_ERROR)
     return files
 
 
@@ -237,11 +323,11 @@ def print_output(result_dict, output, remove_path):
 
     # print it out
     if output:
-        with open_w_exit(output, "w", 2) as f:
+        with open_w_exit(output, "w", OUTPUT_FILE_ERROR) as f:
             f.write(buff)
             f.flush()
     else:
-        print(buff)
+        print(buff[:-1])
     return
 
 if __name__ == "__main__":
@@ -251,6 +337,7 @@ if __name__ == "__main__":
     list_of_files = list_files(args['in'], args['sub'])
     # Compute occurencies
     result = dict()
-    [result.update(find_in_file(where, args)) for where in list_of_files]
+    err = INPUT_SUBDIR_ERROR if args['sub'] else INPUT_FILE_ERROR
+    [result.update(find_in_file(where, args, err)) for where in list_of_files]
     # Print the result
     print_output(result, args['out'], args['p'])
