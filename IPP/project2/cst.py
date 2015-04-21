@@ -248,7 +248,7 @@ class SourceCode():
         for op in OPERATORS:
             op = re.escape(op)
             occurs += len(re.findall(r'(?:\A|\w|\s|\b)({0})(?:\Z|\w|\s|\b|;)'.format(op), self.content))
-            self.content = re.sub(r'(?:\A|\w|\s|\b)({0})(?:\Z|\w|\s|\b|;)'.format(op), '',self.content))
+            self.content = re.sub(r'(?:\A|\w|\s|\b)({0})(?:\Z|\w|\s|\b|;)'.format(op), '',self.content)
 
         return occurs
 
@@ -278,7 +278,7 @@ def find_in_file(name, mode, error):
     :param name: filename
     :param mode: what to look for
     :param error: if open a file fails what should be the return code
-    :return dict: dictionarz containing a pair filename: occurencies
+    :return dict: dictionary containing a pair filename: occurencies
     """
     result = dict()
     f = SourceCode(name, error)
@@ -356,9 +356,9 @@ def print_output(result_dict, output, remove_path):
                 key = key.split("/")[-1]
             # add indexes to handle files with the same name (up to 10 files)
             index = 0
-            while key + str(index) in new.keys():
+            while key + ' ' + str(index) in new.keys():
                 index += 1
-            key = key + str(index)
+            key = key + ' ' + str(index)
             new[key] = value
 
         result_dict = new
@@ -366,11 +366,11 @@ def print_output(result_dict, output, remove_path):
         # sort the ddictionary alphabeticaly
         result_dict = OrderedDict(sorted(result_dict.items(), key=lambda t: t[0]))
 
-        k_max = max([len(key) for key in result_dict.keys()])
+        k_max = max([len(key.split(' ')[0]) for key in result_dict.keys()])
         v_max = max([len(str(val)) for key, val in result_dict.items()])
         v_sum = sum([val for key, val in result_dict.items()])
 
-        k_max = max(k_max - 1, len("CELKEM:"))
+        k_max = max(k_max, len("CELKEM:"))
         v_max = max(v_max, len(str(v_sum)))
         # format string
         template = "{0:" + str(k_max) + "} {1:>" + str(v_max) + "d}\n"
@@ -378,9 +378,7 @@ def print_output(result_dict, output, remove_path):
 
         # add line for each file
         for key, value in result_dict.items():
-            if remove_path:
-                key = key.split("/")[-1]
-            buff += template.format(key[:-1], value)
+            buff += template.format(key.split(' ')[0], value)
 
         buff += template.format('CELKEM:', v_sum)
     else:
