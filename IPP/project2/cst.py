@@ -11,11 +11,12 @@ from contextlib import contextmanager
 from collections import OrderedDict
 from io import StringIO
 
-KEYWORDS = ['auto', 'break', 'case', 'char', 'const', 'continue', 'default',
-            'do', 'double', 'else', 'enum', 'extern', 'float', 'for', 'goto',
-            'if', 'inline', 'int', 'long', 'register', 'restrict', 'return',
-            'short', 'signed', 'sizeof', 'static', 'struct', 'switch',
-            'typedef', 'union', 'unsigned', 'void', 'volatile', 'while']
+KEYWORDS = ['auto', 'break', 'case', 'continue', 'default', 'do', 'else',
+            'enum', 'extern', 'for', 'goto', 'if', 'inline', 'register',
+            'restrict', 'return', 'signed', 'sizeof', 'static', 'struct',
+            'switch', 'typedef', 'union', 'unsigned', 'volatile', 'while']
+TYPES = ['char', 'const', 'double', 'float', 'int', 'long', 'short', 'void',
+         '_Bool', '_Imaginary', '_Complex' ]  #  extra?
 OPERATORS = ['++', '--', '+', '-', '+=', '-=', '*', '*=', '/', '/=', '%',
              '%=', '<', '<=', '>', '>=', '==', '!=', '!', '&&', '||', '<<',
              '<<=', '>>', '>>=', '~', '&', '&=', '|', '|=', '^', '^=', '=',
@@ -183,8 +184,7 @@ class SourceCode():
             elif state == 3:
                 if char == '\n':
                     state = 1
-                else:
-                    occurs += 1
+                occurs += 1
             # in possible multiline comment
             elif state == 4:
                 if char == '*':
@@ -198,6 +198,9 @@ class SourceCode():
 
 
     def macro_strip(self):
+        """
+        Strip macros, doesn't matter whether oneline or multiline
+        """
         content = ''
         in_macro = False
         for line in StringIO(self.content).readlines():
@@ -212,34 +215,71 @@ class SourceCode():
         self.content = content
 
     def string_strip(self):
+        """
+        Remove string's content and character literals, leave only quotes
+        """
         self.content = re.sub('"(\\.*|[^"]*)"', '""', self.content)
-        print( self.content)
+        self.content = re.sub('\'.\'', '\'\'', self.content)
 
 
     def keyword_strip(self):
+        """
+        Count and remove keywords. If the keyword is datatype remove also
+        possible reference and dereference signs
+        :return occurs: count of keywords in the file
+        """
         occurs = 0
-        for word in KEYWORDS:
+        for word in KEYWORDS + TYPES:
             occurs += len(re.findall('\W{0}\W'.format(word), self.content, re.IGNORECASE))
-            self.content = re.sub('(\W){0}(\W)'.format(word), '\1\2', self.content)
+            if word in TYPES:
+                self.content = re.sub(r'\b(?:{0})(?:\s*,?\s*\(?\s*\*+\s*\(?\w*\)?)+'.format(word), '', self.content, re.IGNORECASE)
+            else:
+                self.content = re.sub('(\W){0}(\W)'.format(word), '\1\2', self.content, re.IGNORECASE)
         return occurs
 
 
     def operator_strip(self):
+        """
+        Count and remove all operators
+        :return occurs: count of operators in the file
+        """
         content = ''
         occurs = 0
+        for op in OPERATORS:
+            op = re.escape(op)
+            occurs += len(re.findall(r'(?:\A|\w|\s|\b)({0})(?:\Z|\w|\s|\b|;)'.format(op), self.content))
+            self.content = re.sub(r'(?:\A|\w|\s|\b)({0})(?:\Z|\w|\s|\b|;)'.format(op), '',self.content))
+
         return occurs
 
     def pattern_match(self, pattern):
+        """
+        Looks for all pattern occurencies
+        :param pattern: searched string
+        :return occurs: count of occurencies of pattern in the file
+        """
+        occurs = 0
         for line in StringIO(self.content).readlines():
             occurs += len(re.findall(pattern, line))
         return occurs
 
-    def identificators_match(self):
-        return len(re.findall('\b[a-zA-Z_]{1}\w*\b', self.content))
+    def identificator_match(self):
+        """
+        Counts all words in a file. If launched after all other methods it
+        gives you the count of all identificators
+        """
+        return len(re.findall('\W([a-zA-Z_]{1}\w*)\W', self.content))
 
 
 
 def find_in_file(name, mode, error):
+    """
+    Main search function. Takes a file and gives you desired magic number
+    :param name: filename
+    :param mode: what to look for
+    :param error: if open a file fails what should be the return code
+    :return dict: dictionarz containing a pair filename: occurencies
+    """
     result = dict()
     f = SourceCode(name, error)
 
@@ -286,13 +326,17 @@ def list_files(name, subdir):
     :return: list of *.c *.h files
     """
     files = list()
+    name = os.path.abspath(name)
     if os.path.isfile(name):
         files.append(name)
     elif os.path.isdir(name):
         files += _list_dir(name, subdir)
     else:
-        raise IOError("File or directory does not exist")
-        sys.exit(INPUT_FILE_ERROR)
+        try:
+            raise IOError("File or directory does not exist")
+        except OSError:
+            traceback.print_exc(file=sys.stderr)
+            sys.exit(INPUT_FILE_ERROR)
     return files
 
 
@@ -304,42 +348,43 @@ def print_output(result_dict, output, remove_path):
     :param output: filename or nothing of stdoutu
     """
     # compute the length of a line
-    if result_dict == dict():
-        return
-    # if no path is displayed remove it
-    new = dict()
-    for key, value in result_dict.items():
-        if remove_path:
-            key = key.split("/")[-1]
-        # add indexes to handle files with the same name (up to 10 files)
-        index = 0
-        while key + str(index) in new.keys():
-            index += 1
-        key = key + str(index)
-        new[key] = value
+    if result_dict != dict():
+        # if no path is displayed remove it
+        new = dict()
+        for key, value in result_dict.items():
+            if remove_path:
+                key = key.split("/")[-1]
+            # add indexes to handle files with the same name (up to 10 files)
+            index = 0
+            while key + str(index) in new.keys():
+                index += 1
+            key = key + str(index)
+            new[key] = value
 
-    result_dict = new
+        result_dict = new
 
-    # sort the ddictionary alphabeticaly
-    result_dict = OrderedDict(sorted(result_dict.items(), key=lambda t: t[0]))
+        # sort the ddictionary alphabeticaly
+        result_dict = OrderedDict(sorted(result_dict.items(), key=lambda t: t[0]))
 
-    k_max = max([len(key) for key in result_dict.keys()])
-    v_max = max([len(str(val)) for key, val in result_dict.items()])
-    v_sum = sum([val for key, val in result_dict.items()])
+        k_max = max([len(key) for key in result_dict.keys()])
+        v_max = max([len(str(val)) for key, val in result_dict.items()])
+        v_sum = sum([val for key, val in result_dict.items()])
 
-    k_max = max(k_max - 1, len("CELKEM:"))
-    v_max = max(v_max, len(str(v_sum)))
-    # format string
-    template = "{0:" + str(k_max) + "} {1:>" + str(v_max) + "d}\n"
-    buff = str()
+        k_max = max(k_max - 1, len("CELKEM:"))
+        v_max = max(v_max, len(str(v_sum)))
+        # format string
+        template = "{0:" + str(k_max) + "} {1:>" + str(v_max) + "d}\n"
+        buff = str()
 
-    # add line for each file
-    for key, value in result_dict.items():
-        if remove_path:
-            key = key.split("/")[-1]
-        buff += template.format(key[:-1], value)
+        # add line for each file
+        for key, value in result_dict.items():
+            if remove_path:
+                key = key.split("/")[-1]
+            buff += template.format(key[:-1], value)
 
-    buff += template.format('CELKEM:', v_sum)
+        buff += template.format('CELKEM:', v_sum)
+    else:
+        buff = 'CELKEM: 0\n'
 
     # print it out
     if output:
