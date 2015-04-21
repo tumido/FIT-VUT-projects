@@ -16,7 +16,6 @@ KEYWORDS = ['auto', 'break', 'case', 'char', 'const', 'continue', 'default',
             'if', 'inline', 'int', 'long', 'register', 'restrict', 'return',
             'short', 'signed', 'sizeof', 'static', 'struct', 'switch',
             'typedef', 'union', 'unsigned', 'void', 'volatile', 'while']
-KEYWORDS = KEYWORDS + [key.upper() for key in KEYWORDS]
 OPERATORS = ['++', '--', '+', '-', '+=', '-=', '*', '*=', '/', '/=', '%',
              '%=', '<', '<=', '>', '>=', '==', '!=', '!', '&&', '||', '<<',
              '<<=', '>>', '>>=', '~', '&', '&=', '|', '|=', '^', '^=', '=',
@@ -93,7 +92,7 @@ def open_w_exit(filename, mode, exitcode):
     :param exitcode: when exception is raised exit with gicen code
     """
     try:
-        f = open(filename, mode)
+        f = open(filename, mode, encoding='iso-8859-2')
     except OSError:
         traceback.print_exc(file=sys.stderr)
         sys.exit(exitcode)
@@ -112,7 +111,7 @@ def parse_args():
     :return: Dictionary full of parsed options
     """
     parser = MyArgparse(description='C stats analyzer tool',
-                        epilog='Tomas Cofual <xcoufa09@stud.fit.vutbr.cz>')
+                        epilog='Tomas Coufal <xcoufa09@stud.fit.vutbr.cz>')
     parser.add_argument('--input=', dest='in', action='store',
                         metavar='FILE or DIR', default=os.getcwd(),
                         help='specify the imput file or directory '
@@ -139,122 +138,139 @@ def parse_args():
     return vars(parser.parse_args())
 
 
-def comments_strip(f):
+class SourceCode():
     """
-    Removes comments and returns count of characters
-    :param f: StringIO object to parse
-    :return occurs: number of chars in comments
-    :return content: StringIO object without comments
+    SourceCode object keeps the content of a file and provides methods for parsing it
     """
-    occurs = 0
-    state = 1
-    content = ''
-    for char in f.read():
-        # regual char
-        if state == 1:
-            if char == '/':
-                state = 2
-            else:
-                content += char
-        # suspected char
-        elif state == 2:
-            if char == '/':
-                state = 3
-            elif char == '*':
-                state = 4
-            else:
-                content += char
-        # in oneline comment (till eol)
-        elif state == 3:
-            occurs += 2  # doubleslash
-            if char == '\n':
-                state = 1
-            else:
+    def __init__(self, filename, error):
+        """
+        Initializes the SourceCode object with file and copies it's content
+        :param filename: name of analyzed file
+        :param error: error code returned if open fails
+        """
+        with open_w_exit(filename, 'r', error) as f:
+            self.content = f.read()
+
+    def comments_strip(self):
+        """
+        Removes comments and returns count of characters
+        :param f: StringIO object to parse
+        :return occurs: number of chars in comments
+        :return content: StringIO object without comments
+        """
+        occurs = 0
+        state = 1
+        content = ''
+        for char in self.content:
+            # regual char
+            if state == 1:
+                if char == '/':
+                    state = 2
+                else:
+                    content += char
+            # suspected char
+            elif state == 2:
+                if char == '/':
+                    occurs += 2  # doubleslash
+                    state = 3
+                elif char == '*':
+                    occurs += 2
+                    state = 4
+                else:
+                    state = 1
+                    content += '/' + char
+            # in oneline comment (till eol)
+            elif state == 3:
+                if char == '\n':
+                    state = 1
+                else:
+                    occurs += 1
+            # in possible multiline comment
+            elif state == 4:
+                if char == '*':
+                    state = 5
                 occurs += 1
-        # in possible multiline comment
-        elif state == 4:
-            occurs += 2  # involve /* at the begining to sum
-            if char == '*':
-                state = 5
-            occurs += 1
-        elif state == 5:
-            state = 1 if char == '/' else 5
-            occurs += 1
-    return occurs, StringIO(content)
-
-
-def macro_strip(f):
-    content = ''
-    in_macro = False
-    for line in f.readlines():
-        if re.match('^#.*', line):
-            if re.match('.*\\\$', line):
-                in_macro = True
-        elif in_macro:
-            if not re.match('.*\\\$', line):
-                in_macro = False
-        else:
-            content += line
-
-    return StringIO(content)
-
-
-def keyw_strip(f):
-    content = ''
-    occurs = 0
-    for line in f.readlines():
-        for word in line.split():
-            if word in KEYWORDS:
+            elif state == 5:
+                state = 1 if char == '/' else 4
                 occurs += 1
+        self.content = content
+        return occurs
+
+
+    def macro_strip(self):
+        content = ''
+        in_macro = False
+        for line in StringIO(self.content).readlines():
+            if re.match('^#.*', line):
+                if re.match('.*\\\$', line):
+                    in_macro = True
+            elif in_macro:
+                if not re.match('.*\\\$', line):
+                    in_macro = False
             else:
-                content += word + ' '
-    return occurs, StringIO(content)
+                content += line
+        self.content = content
+
+    def string_strip(self):
+        self.content = re.sub('"(\\.*|[^"]*)"', '""', self.content)
+        print( self.content)
 
 
-def operat_strip(f):
-    content = ''
-    occurs = 0
-    return occurs, StringIO(content)
+    def keyword_strip(self):
+        occurs = 0
+        for word in KEYWORDS:
+            occurs += len(re.findall('\W{0}\W'.format(word), self.content, re.IGNORECASE))
+            self.content = re.sub('(\W){0}(\W)'.format(word), '\1\2', self.content)
+        return occurs
+
+
+    def operator_strip(self):
+        content = ''
+        occurs = 0
+        return occurs
+
+    def pattern_match(self, pattern):
+        for line in StringIO(self.content).readlines():
+            occurs += len(re.findall(pattern, line))
+        return occurs
+
+    def identificators_match(self):
+        return len(re.findall('\b[a-zA-Z_]{1}\w*\b', self.content))
+
 
 
 def find_in_file(name, mode, error):
     result = dict()
-    occurs = 0
-    with open_w_exit(name, 'r', error) as f:
-        # mode 'w' searches also in strings, macros and comments
-        if mode['w']:
-            for line in f.readlines():
-                occurs += len(re.findall(mode['w'], line))
-        else:
-            # macros should be ignored
-            f = macro_strip(f)
-            # for 'c' comment count mode we need a small fsm
-            occurs, f = comments_strip(f)
-            # for c mode we're done, in other cases null the counter
-            if not args['c']:
-                occurs = 0
-                # let's count KEYWORDS
-                occurs, f = keyw_strip(f)
-                # we have counted keywords and removed them, if there is any
-                # other mode specified go on
-                if not args['k']:
-                    occurs = 0
-                    # let's count OPERATORS
-                    occurs, f = operat_strip(f)
-                    if not args['o']:
-                        occurs = 0
-                        # let's count IDENTIFICATORS - the rest, besides
-                        # references and such
-                        occurs = len(re.findall('[a-zA-Z_]{1}\w*', f.read()))
+    f = SourceCode(name, error)
 
-        result[name] = occurs
-    return result
+    if mode['w']:
+        return {name: f.pattern_match(mode['w'])}
+    # now strip macros
+    f.macro_strip()
 
+    occurs = f.comments_strip()
+    if mode['c']:
+        return {name : occurs}
+
+    # now strip stings
+    f.string_strip()
+
+    occurs = f.keyword_strip()
+    if mode['k']:
+        return {name : occurs}
+
+    occurs = f.operator_strip()
+    if mode['o']:
+        return {name : occurs}
+
+    if mode['i']:
+        return {name: f.identificator_match()}
+
+    return {name : NaN}
 
 def _list_dir(d, subdir):
     l = list()
-    f_in_dir = os.listdir(d)
-    for item in f_in_dir:
+    for item in os.listdir(d):
         path = os.path.join(d, item)
         if subdir and os.path.isdir(path):
             l += _list_dir(path, subdir)
@@ -295,7 +311,7 @@ def print_output(result_dict, output, remove_path):
     for key, value in result_dict.items():
         if remove_path:
             key = key.split("/")[-1]
-        # add indexes to handle files with the same name
+        # add indexes to handle files with the same name (up to 10 files)
         index = 0
         while key + str(index) in new.keys():
             index += 1
@@ -331,7 +347,7 @@ def print_output(result_dict, output, remove_path):
             f.write(buff)
             f.flush()
     else:
-        print(buff[:-1])
+        print(buff, end='')
     return
 
 if __name__ == "__main__":
@@ -341,7 +357,7 @@ if __name__ == "__main__":
     list_of_files = list_files(args['in'], args['sub'])
     # Compute occurencies
     result = dict()
-    err = INPUT_SUBDIR_ERROR if args['sub'] else INPUT_FILE_ERROR
+    err = INPUT_SUBDIR_ERROR if os.path.isdir(args['in']) else INPUT_FILE_ERROR
     [result.update(find_in_file(where, args, err)) for where in list_of_files]
     # Print the result
     print_output(result, args['out'], args['p'])
