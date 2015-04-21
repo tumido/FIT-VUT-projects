@@ -33,7 +33,7 @@ Projects listed
     1. Client - Server application (client requests info about an user and server queries `/etc/passwd`)
 * IPP
     1. In PHP create XML query script
-    2. In Python 3 make a script for C statistics, conut keywords, identificators, etc.
+    2. Write a script in Python 3 for C statistics: count all occurencies of keywords, identificators, sum of characters in comments, etc.
 
 Subjects not listed
 -------------------
