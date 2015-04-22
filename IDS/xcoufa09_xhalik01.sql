@@ -241,7 +241,7 @@ insert into pacient (ID_pacienta,rodne_cislo,jmeno,prijmeni,pojistovna,adresa,te
 insert into pacient (ID_pacienta,rodne_cislo,jmeno,prijmeni,pojistovna,adresa,telefon_na_pribuzne,telefon,email)
        values(pacient_seq.nextval,8957281729,'Denisa','Moravcová',201,'Jaselská 70, Brno','+420985774844','+420369587825','deniskamoravcova@gmail.com');
 insert into pacient (ID_pacienta,rodne_cislo,jmeno,prijmeni,pojistovna,adresa,telefon_na_pribuzne,telefon,email)
-       values(pacient_seq.nextval,6904185662,'Michal','Hradil',111,'Pražská 17, Brno','+420492874844','+420777456865','michal.hradil@gmail.com');
+       values(pacient_seq.nextval,6904185662,'Michal','Hradil',111,'Pražská 17, Brno','+420492874844','','michal.hradil@gmail.com');
 
 insert into hospitalizace (ID_hospitalizace,datum_zahajeni,datum_ukonceni,pacient,oddeleni,dozorujici_lekar)
        values(hospitalizace_seq.nextval,TO_DATE('10.10.2008', 'dd.mm.yyyy'),TO_DATE('10.11.2012', 'dd.mm.yyyy'),1,'Kardiologie',1);
@@ -252,7 +252,7 @@ insert into hospitalizace (ID_hospitalizace,datum_zahajeni,datum_ukonceni,pacien
 insert into hospitalizace (ID_hospitalizace,datum_zahajeni,datum_ukonceni,pacient,oddeleni,dozorujici_lekar)
        values(hospitalizace_seq.nextval,TO_DATE('12.10.2008', 'dd.mm.yyyy'),TO_DATE('11.11.2015', 'dd.mm.yyyy'),4,'Kardiologie',1);
 insert into hospitalizace (ID_hospitalizace,datum_zahajeni,datum_ukonceni,pacient,oddeleni,dozorujici_lekar)
-       values(hospitalizace_seq.nextval,TO_DATE('12.10.2008', 'dd.mm.yyyy'),TO_DATE('11.11.2015', 'dd.mm.yyyy'),5,'Kardiologie',2);
+       values(hospitalizace_seq.nextval,TO_DATE('12.10.2008', 'dd.mm.yyyy'),TO_DATE('11.11.2015', 'dd.mm.yyyy'),5,'Kardiologie',1);
 insert into hospitalizace (ID_hospitalizace,datum_zahajeni,datum_ukonceni,pacient,oddeleni,dozorujici_lekar)
        values(hospitalizace_seq.nextval,TO_DATE('12.10.2013', 'dd.mm.yyyy'),TO_DATE('11.11.2015', 'dd.mm.yyyy'),6,'Chirurgie',1);
 
@@ -282,7 +282,7 @@ insert into Lekar_pracuje_na_Oddeleni (lekar,oddeleni,telefon,uvazek)
        values(3,'Kardiologie','324571456',1);
 
 insert into Vysetreni_aplikuje_Lecivo (vysetreni,lecivo,mnozstvi,cas,datum)
-       values(1,'0059393','2',TO_DATE('10:10', 'HH24:MI'),TO_DATE('10.10.2008', 'dd.mm.yyyy'));
+       values(1,'0059393','2',TO_DATE('21:18:27', 'hh24:mi:ss'),TO_DATE('10.10.2008', 'dd.mm.yyyy'));
 insert into Vysetreni_aplikuje_Lecivo (vysetreni,lecivo,mnozstvi,cas,datum)
        values(2,'0115528','4',TO_DATE('13:33', 'HH24:MI'),TO_DATE('10.11.2008', 'dd.mm.yyyy'));
 insert into Vysetreni_aplikuje_Lecivo (vysetreni,lecivo,mnozstvi,cas,datum)
@@ -317,37 +317,44 @@ commit;
 
 -- 1) spojeni dvou tabulek
 -- vypise jmeno a prijmeni a ID vysetreni vsech zamestnancu, kteri provedli nejaka vysetreni
-  select jmeno, prijmeni,ID_vysetreni  
-  from Personal, vysetreni 
-  where (Personal.ID_personal = vysetreni.provedl);
+    select jmeno, prijmeni, ID_vysetreni  
+    from Personal, vysetreni 
+    where (Personal.ID_personal = vysetreni.provedl);
 
 -- vypise jmeno, prijmeni a pojistovnu pacientu, kteri byli hospitalizovani na oddeleni Kardiologie
-  select jmeno, prijmeni, pojistovna 
-  from Pacient, Hospitalizace
-  where (pacient.ID_pacienta = Hospitalizace.pacient AND Hospitalizace.oddeleni = 'Kardiologie');
+    select jmeno, prijmeni, pojistovna 
+    from Pacient, Hospitalizace
+    where (pacient.ID_pacienta = Hospitalizace.pacient and Hospitalizace.oddeleni = 'Kardiologie');
 
--- 3) spojeni 3 tabulek
+-- 2) spojeni 3 tabulek
 -- vypise vsechna oddeleni, na kterych pracuje lekar s ID 1
-  select ID_personal, nazev_oddeleni 
-  from (Lekar inner join Lekar_pracuje_na_Oddeleni ON ID_personal = lekar inner join Oddeleni on Oddeleni = nazev_oddeleni) 
-  where ID_personal = 1;
+    select ID_personal, nazev_oddeleni 
+    from (Lekar inner join Lekar_pracuje_na_Oddeleni on (ID_personal = lekar) inner join Oddeleni on (Oddeleni = nazev_oddeleni)) 
+    where ID_personal = 1;
 
--- 4) Klaule group by s agregacni funkci
--- vypise, kolik zamestnancu ma dany typ uvazku
-  select COUNT(ID_personal), uvazek from Personal GROUP BY uvazek;
+-- 3) Klauzule group by s agregacni funkci
+-- vypise, kolik zamestnancu ma jaky typ uvazku
+    select count(ID_personal), uvazek from Personal group by uvazek;
 
--- pocet aktualne hospitalizovanyc pacientu
-  select SUM(COUNT(ID_pacienta)) 
-  from pacient
-  inner join hospitalizace on (hospitalizace.pacient = pacient.ID_pacienta) 
-  where(SYSDATE BETWEEN hospitalizace.datum_zahajeni and hospitalizace.datum_ukonceni) 
-  group by ID_pacienta;
+-- pocet aktualne hospitalizovanych pacientu
+    select sum(count(ID_pacienta)) 
+    from pacient
+    inner join hospitalizace on (hospitalizace.pacient = pacient.ID_pacienta) 
+    where(sysdate between hospitalizace.datum_zahajeni and hospitalizace.datum_ukonceni) 
+    group by ID_pacienta;
 
--- 5) Dotaz obsahujici predikat EXISTS
--- vyber neco, pokud nekde jinde plati, ze to existuje
--- vymyslet rozumny priklad.. vse co me napada je strasne vykonstruovane a nema to smysl takto psat
+-- 4) Dotaz obsahujici predikat EXISTS
+-- vybere vsechny pacienty, kteri jsou prave hospitalizovani, a k nim vypise jejich dozorujiciho lekare, pokud prave nejake hospitalizace probihaji
+    select dozorujici_lekar, pacient 
+    from hospitalizace 
+    where(sysdate between hospitalizace.datum_zahajeni and hospitalizace.datum_ukonceni) 
+    and exists (select * from hospitalizace where sysdate between hospitalizace.datum_zahajeni and hospitalizace.datum_ukonceni);
 
--- 6) dotaz s predikatem IN s vnorenym selectem
--- vypise jmeno, prijmeni a pojistovnu pacietu, kteri jsou prave hospitalizovani a jejich pojistovna je 111
-select jmeno, prijmeni, pojistovna from pacient inner join hospitalizace on (ID_pacienta = pacient) 
-where(SYSDATE BETWEEN hospitalizace.datum_zahajeni and hospitalizace.datum_ukonceni) and pojistovna in (select pojistovna from pacient where pojistovna = 111);
+-- 5) dotaz s predikatem IN s vnorenym selectem
+-- vypise jmeno a prijmeni pacientu, kteri jsou prave hospitalizovani a jejich pojistovna je 111 nebo 205
+    select jmeno, prijmeni
+    from pacient 
+    inner join hospitalizace on (ID_pacienta = pacient) 
+    where(SYSDATE BETWEEN hospitalizace.datum_zahajeni and hospitalizace.datum_ukonceni) 
+    and pojistovna in (111,205);
+commit;
