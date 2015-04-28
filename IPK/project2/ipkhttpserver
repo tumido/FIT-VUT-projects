@@ -59,6 +59,7 @@ class FileSend(socketserver.BaseRequestHandler):
         if not os.path.isfile(path):
             self.message = bytes(RESPONSE.format('404','Not Found', ''), encoding='utf-8')
             self.respond()
+            return
 
         # file was found, respond it's content
         self.message = bytes(RESPONSE.format('200', 'OK',
