@@ -23,13 +23,21 @@ out_log.setLevel(level=logging.INFO)
 out_log.addHandler(logging.FileHandler(LOG_NAME + '.out.log'))
 
 
-def parse_args():
+def get_uri():
     """Argument parser"""
     parser = ArgumentParser(description="HTTP TCP/IP client",
                             epilog='Tomas Coufal <xcoufa09@stud.fit.vutbr.cz>')
     parser.add_argument('URI', action='store',
                         help='requested HTTP URI, for details see rfc3986')
-    return vars(parser.parse_args())
+    args = vars(parser.parse_args())
+    uri = urlparse(args['URI'])
+    if not uri.scheme == 'http':
+        raise SyntaxError('Scheme is not valid. Accepts HTTP only.')
+    if len(uri.netloc.split(':')) != 2:
+        raise SyntaxError('Port not specified.')
+    ret = uri.netloc.split(':')
+    ret.append(uri.path)
+    return ret
 
 
 def __get_line(s):
@@ -51,23 +59,16 @@ def get_header(s):
 
 
 if __name__ == "__main__":
-    args = parse_args()
-    uri = urlparse(args['URI'])
-    if not uri.scheme == 'http':
-        raise SyntaxError('Scheme is not valid. Accepts HTTP only.')
-    if len(uri.netloc.split(':')) != 2:
-        raise SyntaxError('Port not specified.')
-
+    host, port, path = get_uri()
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    host, port = uri.netloc.split(':')
     s.connect((host, int(port)))
-    s.send(REQUEST.format(uri.path).encode('utf-8'))
-    out_log.info(REQUEST.format(uri.path))
+    s.send(REQUEST.format(path).encode('utf-8'))
+    out_log.info(REQUEST.format(path))
 
     # recieve response from server
     # get header
     header = get_header(s)
-    in_log.info(header)
+    in_log.info(header + b'\r\n')
     chunked = False
     if b'Transfer-Encoding: chunked' in header:
         chunked = True
