@@ -50,41 +50,42 @@ class FileSend(socketserver.BaseRequestHandler):
 
         # check for valid HTTP protocol
         if request[0] != 'GET' or request[2] != 'HTTP/1.1':
-            self.message = RESPONSE.format('400','Bad Request','')
+            self.message = bytes(RESPONSE.format('400','Bad Request',''), encoding='utf-8')
             self.respond()
             return
 
         path = os.path.join(os.getcwd(), DATA_FOLDER) + request[1]
 
         if not os.path.isfile(path):
-            self.message = RESPONSE.format('404','Not Found', '')
+            self.message = bytes(RESPONSE.format('404','Not Found', ''), encoding='utf-8')
             self.respond()
 
         # file was found, respond it's content
-        self.message = RESPONSE.format('200', 'OK',
-                            'Content-Type: text/plain\r\n')
+        self.message = bytes(RESPONSE.format('200', 'OK',
+                            'Content-Type: text/plain\r\n'), encoding='utf-8')
         if os.path.getsize(path) > CHUNK_SIZE:
-            self.message += 'Transfer-Encoding: chunked\r\n'
-            with open(path, 'r') as f:
+            self.message += b'Transfer-Encoding: chunked\r\n'
+            with open(path, 'rb') as f:
                 while True:
                     content = f.read(CHUNK_SIZE)
                     if not content:
                         break
-                    chunk_hex_size = hex(len(content.encode('utf-8'))).split('x')[-1]
-                    self.message += '\r\n' + chunk_hex_size + '\r\n' + content
+                    chunk_hex_size = hex(len(content)).split('x')[-1]
+                    chunk_hex_size = bytes(chunk_hex_size, encoding='utf-8')
+                    self.message += b'\r\n' + chunk_hex_size + b'\r\n' + content
                     self.respond()
                     if DELAY != 0:
                         sleep(DELAY / 1000)
-                    self.message = str()
+                    self.message = bytes()
         else:
-            with open(path, 'r') as f:
+            with open(path, 'rb') as f:
                 content = f.read()
-            self.message += '\r\n' + content
+            self.message += b'\r\n' + content
             self.respond()
 
     def respond(self):
         self.logger['OUT'].info(self.message)
-        self.request.sendall(self.message.encode('utf-8'))
+        self.request.sendall(self.message)
 
 
 def parse_args():
