@@ -1,0 +1,1 @@
+This is short text. Should be sent in one piece, no spliting into chunks.

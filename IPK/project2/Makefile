@@ -5,8 +5,9 @@ all:
 	chmod +x $(PROGS)
 
 .PHONY: clean test pack
+.SILENT: clean
 clean:
-	rm -rfv *.payload *.header *.log
+	rm -rf *.payload *.header *.log
 test:
 	echo 'test'
 pack:
