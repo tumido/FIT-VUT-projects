@@ -6,6 +6,7 @@ import os
 import socketserver
 from argparse import ArgumentParser
 from datetime import datetime
+from time import sleep
 
 CHUNK_SIZE = '4096'
 DEFAULT_PORT = '8080'
@@ -23,7 +24,7 @@ out_log = logging.getLogger('OUT')
 out_log.setLevel(level=logging.INFO)
 out_log.addHandler(logging.FileHandler(LOG_NAME + '.out.log'))
 
-class FileSend(socketserver.StreamRequestHandler):
+class FileSend(socketserver.BaseRequestHandler):
     """
     RequestHandler class for the server
 
@@ -43,33 +44,47 @@ class FileSend(socketserver.StreamRequestHandler):
         TCP socket handler which sends desired file to the client
         """
         # read data from the socket
-        self.data = self.rfile.readline().decode('utf-8')
+        self.data = self.request.recv(CHUNK_SIZE).decode('utf-8')
         self.logger['IN'].info(self.data)
         request = self.data.split()
 
         # check for valid HTTP protocol
         if request[0] != 'GET' or request[2] != 'HTTP/1.1':
-            message = RESPONSE.format('400','Bad Request','')
-            self.logger['OUT'].info(message)
-            self.wfile.write(message.encode('utf-8'))
+            self.message = RESPONSE.format('400','Bad Request','')
+            self.respond()
             return
 
         path = os.path.join(os.getcwd(), DATA_FOLDER) + request[1]
 
         if not os.path.isfile(path):
-            message = RESPONSE.format('404','Not Found', '')
-            self.logger['OUT'].info(message)
-            self.wfile.write(message.encode('utf-8'))
+            self.message = RESPONSE.format('404','Not Found', '')
+            self.respond()
 
         # file was found, respond it's content
-        message = RESPONSE.format('200', 'OK',
+        self.message = RESPONSE.format('200', 'OK',
                             'Content-Type: text/plain\r\n')
+        if os.path.getsize(path) > CHUNK_SIZE:
+            self.message += 'Transfer-Encoding: chunked\r\n'
+            with open(path, 'r') as f:
+                while True:
+                    content = f.read(CHUNK_SIZE)
+                    if not content:
+                        break
+                    chunk_hex_size = hex(len(content.encode('utf-8'))).split('x')[-1]
+                    self.message += '\r\n' + chunk_hex_size + '\r\n' + content
+                    self.respond()
+                    if DELAY != 0:
+                        sleep(DELAY / 1000)
+                    self.message = str()
+        else:
+            with open(path, 'r') as f:
+                content = f.read()
+            self.message += '\r\n' + content
+            self.respond()
 
-        with open(path, 'r') as f:
-            content = f.read()
-        message += '\r\n' + content
-        self.logger['OUT'].info(message)
-        self.wfile.write(message.encode('utf-8'))
+    def respond(self):
+        self.logger['OUT'].info(self.message)
+        self.request.sendall(self.message.encode('utf-8'))
 
 
 def parse_args():
@@ -87,7 +102,7 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
     CHUNK_SIZE = int(args['c'])
-    DELAY = int(args['d'])
+    DELAY = float(args['t'])
     host, port = "localhost", int(args['p'])
     server = socketserver.TCPServer((host, port), FileSend)
     server.serve_forever()

@@ -53,10 +53,13 @@ if __name__ == "__main__":
         response += chunk.decode('utf-8')
     s.close()
     in_log.info(response)
-    msg = response.split('\r\n\r\n')
+    header, payload = response.split('\r\n\r\n')
     with open(RESP_NAME + '.header', 'w') as h:
-        h.write(msg[0] + '\r\n')
+        h.write(header + '\r\n')
         h.flush()
     with open(RESP_NAME + '.payload', 'w') as p:
-        p.write(msg[1])
+        try:
+            p.write(payload)
+        except IndexError:
+            p.write('')
         p.flush()
