@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+__author__ = 'xcoufa09'
+
+import logging
+import os
+import socket
+from argparse import ArgumentParser
+from datetime import datetime
+from urllib.parse import urlparse
+
+REQUEST = 'GET {0} HTTP/1.1\r\n'
+LOG_NAME = 'ipkHttpClient-{0}'.format(datetime.today().
+                                      strftime('%Y-%m-%d:%H:%M:%S'))
+RESP_NAME = 'ipkResp-{0}'.format(datetime.today().
+                                      strftime('%Y-%m-%d:%H:%M:%S'))
+CHUNK_SIZE = 4096
+
+in_log = logging.getLogger('IN')
+in_log.setLevel(level=logging.INFO)
+in_log.addHandler(logging.FileHandler(LOG_NAME + '.in.log'))
+
+out_log = logging.getLogger('OUT')
+out_log.setLevel(level=logging.INFO)
+out_log.addHandler(logging.FileHandler(LOG_NAME + '.out.log'))
+
+def parse_args():
+    """Argument parser"""
+    parser = ArgumentParser(description="HTTP TCP/IP client",
+                            epilog='Tomas Coufal <xcoufa09@stud.fit.vutbr.cz>')
+    parser.add_argument('URI', action='store',
+                        help='requested HTTP URI, for details see rfc3986')
+    return vars(parser.parse_args())
+
+
+if __name__ == "__main__":
+    args = parse_args()
+    uri = urlparse(args['URI'])
+    if not uri.scheme == 'http':
+        raise SyntaxError('Scheme is not valid. Accepts HTTP only.')
+    if len(uri.netloc.split(':')) != 2:
+        raise SyntaxError('Port not specified.')
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    host, port = uri.netloc.split(':')
+    s.connect((host, int(port)))
+    s.send(REQUEST.format(uri.path).encode('utf-8'))
+    out_log.info(REQUEST.format(uri.path))
+    response = str()
+    while True:
+        chunk = s.recv(CHUNK_SIZE)
+        if not chunk:
+            break
+        response += chunk.decode('utf-8')
+    s.close()
+    in_log.info(response)
+    msg = response.split('\r\n\r\n')
+    with open(RESP_NAME + '.header', 'w') as h:
+        h.write(msg[0] + '\r\n')
+        h.flush()
+    with open(RESP_NAME + '.payload', 'w') as p:
+        p.write(msg[1])
+        p.flush()
