@@ -2,7 +2,6 @@
 __author__ = 'xcoufa09'
 
 import logging
-import os
 import socket
 from argparse import ArgumentParser
 from datetime import datetime
@@ -12,8 +11,8 @@ REQUEST = 'GET {0} HTTP/1.1\r\n'
 LOG_NAME = 'ipkHttpClient-{0}'.format(datetime.today().
                                       strftime('%Y-%m-%d:%H:%M:%S'))
 RESP_NAME = 'ipkResp-{0}'.format(datetime.today().
-                                      strftime('%Y-%m-%d:%H:%M:%S'))
-CHUNK_SIZE = 4096
+                                 strftime('%Y-%m-%d:%H:%M:%S'))
+CHUNK_SIZE = 1024
 
 in_log = logging.getLogger('IN')
 in_log.setLevel(level=logging.INFO)
@@ -23,6 +22,7 @@ out_log = logging.getLogger('OUT')
 out_log.setLevel(level=logging.INFO)
 out_log.addHandler(logging.FileHandler(LOG_NAME + '.out.log'))
 
+
 def parse_args():
     """Argument parser"""
     parser = ArgumentParser(description="HTTP TCP/IP client",
@@ -30,6 +30,24 @@ def parse_args():
     parser.add_argument('URI', action='store',
                         help='requested HTTP URI, for details see rfc3986')
     return vars(parser.parse_args())
+
+
+def __get_line(s):
+    line = bytes()
+    while True:
+        char = s.recv(1)
+        line += char
+        if not char or char == b'\n':
+            return line
+
+
+def get_header(s):
+    header = bytes()
+    while True:
+        line = __get_line(s)
+        if line in (b'\n', b'\r\n', b''):
+            return header
+        header += line
 
 
 if __name__ == "__main__":
@@ -45,22 +63,36 @@ if __name__ == "__main__":
     s.connect((host, int(port)))
     s.send(REQUEST.format(uri.path).encode('utf-8'))
     out_log.info(REQUEST.format(uri.path))
-    response = bytes()
 
+    # recieve response from server
+    # get header
+    header = get_header(s)
+    in_log.info(header)
+    chunked = False
+    if b'Transfer-Encoding: chunked' in header:
+        chunked = True
+    # get content
+    payload = bytes()
     while True:
+        if chunked:
+            size = __get_line(s)
+            if size:
+                CHUNK_SIZE = int(size.decode(), 16)
+                in_log.info(size)
         chunk = s.recv(CHUNK_SIZE)
         if not chunk:
             break
-        response += chunk
+        payload += chunk
+        in_log.info(chunk)
+        # read EOL
+        if chunked:
+            __get_line(s)
+
     s.close()
-    in_log.info(response)
-    header, payload = response.split('\r\n\r\n')
+    # write what server sent
     with open(RESP_NAME + '.header', 'wb') as h:
         h.write(header + b'\r\n')
         h.flush()
     with open(RESP_NAME + '.payload', 'wb') as p:
-        try:
-            p.write(payload)
-        except IndexError:
-            p.write('')
+        p.write(payload)
         p.flush()

@@ -25,6 +25,7 @@ out_log = logging.getLogger('OUT')
 out_log.setLevel(level=logging.INFO)
 out_log.addHandler(logging.FileHandler(LOG_NAME + '.out.log'))
 
+
 class FileSend(socketserver.BaseRequestHandler):
     """
     RequestHandler class for the server
@@ -32,6 +33,8 @@ class FileSend(socketserver.BaseRequestHandler):
     Overrides the handle() method to implement the communication to the client
     """
     def __init__(self, request, client_address, server):
+        self.header = str()
+        self.message = bytes()
         self.logger = dict()
         self.logger['IN'] = logging.getLogger('IN')
         self.logger['OUT'] = logging.getLogger('OUT')
@@ -51,53 +54,58 @@ class FileSend(socketserver.BaseRequestHandler):
 
         # check for valid HTTP protocol
         if request[0] != 'GET' or request[2] != 'HTTP/1.1':
-            self.message = bytes(RESPONSE.format('400','Bad Request',''), encoding='utf-8')
+            self.header = RESPONSE.format('400', 'Bad Request', '')
             self.respond()
             return
 
         path = os.path.join(os.getcwd(), DATA_FOLDER) + request[1]
 
         if not os.path.isfile(path):
-            self.message = bytes(RESPONSE.format('404','Not Found', ''), encoding='utf-8')
+            self.header = RESPONSE.format('404', 'Not Found', '')
             self.respond()
             return
 
         # file was found, respond it's content
-        self.message = bytes(RESPONSE.format('200', 'OK',
-                            'Content-Type: ' + guess_type(path)[0] + '\r\n'), encoding='utf-8')
+        mimetype = guess_type(path)[0]
+        self.header = RESPONSE.format('200', 'OK',
+                                      'Content-Type: {0}\r\n'.format(mimetype))
         if os.path.getsize(path) > CHUNK_SIZE:
-            self.message += b'Transfer-Encoding: chunked\r\n'
+            self.header += 'Transfer-Encoding: chunked\r\n'
+            header = True
             with open(path, 'rb') as f:
                 while True:
                     content = f.read(CHUNK_SIZE)
                     if not content:
                         break
-                    chunk_hex_size = hex(len(content)).split('x')[-1]
-                    chunk_hex_size = bytes(chunk_hex_size, encoding='utf-8')
-                    self.message += b'\r\n' + chunk_hex_size + b'\r\n' + content
-                    self.respond()
-                    if DELAY != 0:
-                        sleep(DELAY / 1000)
-                    self.message = bytes()
+                    ch_hex = hex(len(content)).split('x')[-1].encode('utf-8')
+                    self.message = ch_hex + b'\r\n' + content
+                    self.respond(header=header)
+                    if header:
+                        header = False
+                    sleep(DELAY)
         else:
             with open(path, 'rb') as f:
                 content = f.read()
-            self.message += b'\r\n' + content
+            self.message = content
             self.respond()
 
-    def respond(self):
-        self.logger['OUT'].info(self.message)
-        self.request.sendall(self.message)
+    def respond(self, header=True):
+        response = bytes()
+        if header:
+            response = self.header.encode('utf-8')
+        response += b'\r\n' + self.message
+        self.logger['OUT'].info(response)
+        self.request.sendall(response)
 
 
 def parse_args():
     """Argument parser"""
     parser = ArgumentParser(description="HTTP TCP/IP server",
                             epilog='Tomas Coufal <xcoufa09@stud.fit.vutbr.cz>')
-    parser.add_argument('-p', action='store', default=DEFAULT_PORT, metavar='PORT',
-                        help='specify port number')
-    parser.add_argument('-c', action='store', default=CHUNK_SIZE, metavar='CHUNK_SIZE',
-                        help='maximal size of chunk')
+    parser.add_argument('-p', action='store', default=DEFAULT_PORT,
+                        metavar='PORT', help='specify port number')
+    parser.add_argument('-c', action='store', default=CHUNK_SIZE,
+                        metavar='CHUNK_SIZE', help='maximal size of chunk')
     parser.add_argument('-t', action='store', default=DELAY, metavar='TIME',
                         help='minimal delay between sent chunks')
     return vars(parser.parse_args())
@@ -105,7 +113,7 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
     CHUNK_SIZE = int(args['c'])
-    DELAY = float(args['t'])
+    DELAY = float(args['t']) / 1000
     host, port = "localhost", int(args['p'])
     server = socketserver.TCPServer((host, port), FileSend)
     server.serve_forever()
