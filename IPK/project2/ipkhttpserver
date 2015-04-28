@@ -7,8 +7,9 @@ import socketserver
 from argparse import ArgumentParser
 from datetime import datetime
 
-CHUNK_SIZE = 4096
-DEFAULT_PORT = 8080
+CHUNK_SIZE = '4096'
+DEFAULT_PORT = '8080'
+DELAY = '0'
 DATA_FOLDER = 'www'
 RESPONSE = 'HTTP/1.1 {0} {1}\r\n{2}'
 LOG_NAME = 'ipkHttpServer-{0}'.format(datetime.today().
@@ -45,21 +46,28 @@ class FileSend(socketserver.StreamRequestHandler):
         self.data = self.rfile.readline().decode('utf-8')
         self.logger['IN'].info(self.data)
         request = self.data.split()
+
         # check for valid HTTP protocol
         if request[0] != 'GET' or request[2] != 'HTTP/1.1':
             message = RESPONSE.format('400','Bad Request','')
-        # form a message
-        else:
-            path = os.path.join(os.getcwd(), DATA_FOLDER) + request[1]
-            # file was found, respond it's content'
-            if os.path.isfile(path):
-                with open(path, 'r') as f:
-                    content = f.read()
-                message = RESPONSE.format('200', 'OK',
-                                  'Content-Type: text/plain\r\n\r\n' + content)
-            # file doesn't exist
-            else:
-                message = RESPONSE.format('404','Not Found', '')
+            self.logger['OUT'].info(message)
+            self.wfile.write(message.encode('utf-8'))
+            return
+
+        path = os.path.join(os.getcwd(), DATA_FOLDER) + request[1]
+
+        if not os.path.isfile(path):
+            message = RESPONSE.format('404','Not Found', '')
+            self.logger['OUT'].info(message)
+            self.wfile.write(message.encode('utf-8'))
+
+        # file was found, respond it's content
+        message = RESPONSE.format('200', 'OK',
+                            'Content-Type: text/plain\r\n')
+
+        with open(path, 'r') as f:
+            content = f.read()
+        message += '\r\n' + content
         self.logger['OUT'].info(message)
         self.wfile.write(message.encode('utf-8'))
 
@@ -68,16 +76,18 @@ def parse_args():
     """Argument parser"""
     parser = ArgumentParser(description="HTTP TCP/IP server",
                             epilog='Tomas Coufal <xcoufa09@stud.fit.vutbr.cz>')
-    parser.add_argument('-p', action='store', default=str(DEFAULT_PORT), metavar='PORT',
+    parser.add_argument('-p', action='store', default=DEFAULT_PORT, metavar='PORT',
                         help='specify port number')
-    parser.add_argument('-c', action='store', metavar='CHUNK_SIZE',
+    parser.add_argument('-c', action='store', default=CHUNK_SIZE, metavar='CHUNK_SIZE',
                         help='maximal size of chunk')
-    parser.add_argument('-t', action='store', metavar='TIME',
+    parser.add_argument('-t', action='store', default=DELAY, metavar='TIME',
                         help='minimal delay between sent chunks')
     return vars(parser.parse_args())
 
 if __name__ == "__main__":
     args = parse_args()
+    CHUNK_SIZE = int(args['c'])
+    DELAY = int(args['d'])
     host, port = "localhost", int(args['p'])
     server = socketserver.TCPServer((host, port), FileSend)
     server.serve_forever()
