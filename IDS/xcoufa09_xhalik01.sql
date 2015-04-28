@@ -358,3 +358,21 @@ commit;
     where(SYSDATE BETWEEN hospitalizace.datum_zahajeni and hospitalizace.datum_ukonceni) 
     and pojistovna in (111,205);
 commit;
+
+-- HOVNO dela to, ze kdyz propistime sestru, tak nam muze osiret oddeleni. Proto vzdy zkontrolujeme jestli ma kazde odd.
+-- vrchni sestru a pokud ne, tak mu jednu pridelime - z pravidla tu sluzebne nejstarsi, co jeste oddeleni nesefuje
+create or replace trigger HOVNO
+before delete on Zdravotni_sestra
+begin
+  set Oddeleni.vrchni_sestra = select MIN(ID_personal) from ...
+  where Oddeleni.vrchni_sestra == ID_personal
+      Oddeleni.vrchni_sestra = random(Zdravotni_sestra.ID_personal)
+end HOVNO;
+
+
+create or replace trigger delete_zdravotni_sestra
+before delete on Zdravotni_sestra
+begin
+  delete Personal
+  where Personal.ID_personal = Zdravotni_sestra.ID_personal
+end delete_zdravotni_sestra;
