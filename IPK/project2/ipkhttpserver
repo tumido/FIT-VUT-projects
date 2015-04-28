@@ -7,6 +7,7 @@ import socketserver
 from argparse import ArgumentParser
 from datetime import datetime
 from time import sleep
+from mimetypes import guess_type
 
 CHUNK_SIZE = '4096'
 DEFAULT_PORT = '8080'
@@ -63,7 +64,7 @@ class FileSend(socketserver.BaseRequestHandler):
 
         # file was found, respond it's content
         self.message = bytes(RESPONSE.format('200', 'OK',
-                            'Content-Type: text/plain\r\n'), encoding='utf-8')
+                            'Content-Type: ' + guess_type(path)[0] + '\r\n'), encoding='utf-8')
         if os.path.getsize(path) > CHUNK_SIZE:
             self.message += b'Transfer-Encoding: chunked\r\n'
             with open(path, 'rb') as f:

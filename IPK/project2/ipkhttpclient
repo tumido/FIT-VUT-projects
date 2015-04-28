@@ -46,14 +46,15 @@ if __name__ == "__main__":
     s.send(REQUEST.format(uri.path).encode('utf-8'))
     out_log.info(REQUEST.format(uri.path))
     response = bytes()
+
     while True:
         chunk = s.recv(CHUNK_SIZE)
         if not chunk:
             break
         response += chunk
     s.close()
-    in_log.info(str(response))
-    header, payload = [bytes(item, encoding='utf-8') for item in str(response).split('\r\n\r\n')]
+    in_log.info(response)
+    header, payload = response.split('\r\n\r\n')
     with open(RESP_NAME + '.header', 'wb') as h:
         h.write(header + b'\r\n')
         h.flush()
