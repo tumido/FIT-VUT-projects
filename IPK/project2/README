@@ -59,7 +59,7 @@ Next chunk...\r\n
 
 etc.
 ```
-At first header and first chunk is sent (together). After a delay server sends next chunk and repeats this step until end of file. The last chunk's size ussually differs from CHUNK_SIZE.
+First of all header and first chunk are sent (together). After a delay server sends next chunk and repeats this step until end of file. The last chunk's size ussually differs from CHUNK_SIZE.
 
 Simple HTTP Client
 ==================
