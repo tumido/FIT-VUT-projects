@@ -10,6 +10,7 @@ from time import sleep
 from mimetypes import guess_type
 
 CHUNK_SIZE = '4096'
+CHUNK_SIZE_REQUEST = 4096
 DEFAULT_PORT = '8080'
 DELAY = '0'
 DATA_FOLDER = 'www'
@@ -48,7 +49,7 @@ class FileSend(socketserver.BaseRequestHandler):
         TCP socket handler which sends desired file to the client
         """
         # read data from the socket
-        self.data = self.request.recv(CHUNK_SIZE).decode('utf-8')
+        self.data = self.request.recv(CHUNK_SIZE_REQUEST).decode('utf-8')
         self.logger['IN'].info(self.data)
         request = self.data.split()
 
@@ -72,6 +73,7 @@ class FileSend(socketserver.BaseRequestHandler):
         if os.path.getsize(path) > CHUNK_SIZE:
             self.header += 'Transfer-Encoding: chunked\r\n'
             header = True
+            # send by chunks
             with open(path, 'rb') as f:
                 while True:
                     content = f.read(CHUNK_SIZE)
@@ -83,6 +85,9 @@ class FileSend(socketserver.BaseRequestHandler):
                     if header:
                         header = False
                     sleep(DELAY)
+            # send final chunk
+            self.message = b'0\r\n\r\n'
+            self.respond(header=False)
         else:
             with open(path, 'rb') as f:
                 content = f.read()

@@ -68,7 +68,7 @@ if __name__ == "__main__":
     # recieve response from server
     # get header
     header = get_header(s)
-    in_log.info(header + b'\r\n')
+    in_log.info(header)
     chunked = False
     if b'Transfer-Encoding: chunked' in header:
         chunked = True
@@ -81,10 +81,10 @@ if __name__ == "__main__":
                 CHUNK_SIZE = int(size.decode(), 16)
                 in_log.info(size)
         chunk = s.recv(CHUNK_SIZE)
+        in_log.info(chunk)
         if not chunk:
             break
         payload += chunk
-        in_log.info(chunk)
         # read EOL
         if chunked:
             __get_line(s)
@@ -92,7 +92,7 @@ if __name__ == "__main__":
     s.close()
     # write what server sent
     with open(RESP_NAME + '.header', 'wb') as h:
-        h.write(header + b'\r\n')
+        h.write(header)
         h.flush()
     with open(RESP_NAME + '.payload', 'wb') as p:
         p.write(payload)
