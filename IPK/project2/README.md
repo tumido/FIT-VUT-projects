@@ -39,6 +39,7 @@ or
 HTTP/1.1 400 Bad Request\r\n
 \r\n
 ```
+Also when server is facing any kind of `ConnectionError` exception (including for example `BrokenPipeError`) when sending data it just logs the issue and continues in work (by sending next chunk or listening to the next request).
 
 Chunk-based sending
 -------------------
@@ -94,7 +95,7 @@ After sending an request client waits for the response and saves it in the `ipkR
 
 Implementation details
 ======================
-Server (and client also) is wirten in Python3 using modules `socket`, `socketserver`, `urllib.parse`, `argparse`, `os`, `logging`, `datetime`, `mimetypes` and  `time`
+Server (and client also) is writen in Python3 using modules `socket`, `socketserver`, `urllib.parse`, `argparse`, `os`, `logging`, `datetime`, `mimetypes` and  `time`.
 
 Logging
 =======
@@ -109,4 +110,4 @@ By `make tests` you can run some basic test that covers Error states, chunk-base
 Build
 =====
 Makefile is attached. Simple run `make` but it's probably not needed at all.
-Also `make clean` cleans the mess cuased by the logs.
+Also `make clean` cleans the mess caused by the logs.
