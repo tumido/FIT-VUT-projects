@@ -6,21 +6,35 @@ import socket
 from argparse import ArgumentParser
 from datetime import datetime
 from urllib.parse import urlparse
+from time import sleep
 
-REQUEST = 'GET {0} HTTP/1.1\r\n'
+REQUEST = ('GET {0} HTTP/1.1\r\n'
+           'Accept: */*\r\n'
+           'Accept-Encoding: identity\r\n'
+           'Host: {1}\r\n'
+           'Connection: close\r\n'
+           '\r\n')
 LOG_NAME = 'ipkHttpClient-{0}'.format(datetime.today().
                                       strftime('%Y-%m-%d:%H:%M:%S'))
 RESP_NAME = 'ipkResp-{0}'.format(datetime.today().
                                  strftime('%Y-%m-%d:%H:%M:%S'))
-CHUNK_SIZE = 1024
+CHUNK_SIZE = 0
+
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 
 in_log = logging.getLogger('IN')
-in_log.setLevel(level=logging.INFO)
-in_log.addHandler(logging.FileHandler(LOG_NAME + '.in.log'))
+in_log.setLevel(level=logging.DEBUG)
+fh1 = logging.FileHandler(LOG_NAME + '.in.log')
+fh1.setLevel(level=logging.DEBUG)
+fh1.setFormatter(formatter)
+in_log.addHandler(fh1)
 
 out_log = logging.getLogger('OUT')
-out_log.setLevel(level=logging.INFO)
-out_log.addHandler(logging.FileHandler(LOG_NAME + '.out.log'))
+out_log.setLevel(level=logging.DEBUG)
+fh2 = logging.FileHandler(LOG_NAME + '.out.log')
+fh2.setLevel(level=logging.DEBUG)
+fh2.setFormatter(formatter)
+out_log.addHandler(fh2)
 
 
 def get_uri():
@@ -36,7 +50,8 @@ def get_uri():
     if len(uri.netloc.split(':')) != 2:
         raise SyntaxError('Port not specified.')
     ret = uri.netloc.split(':')
-    ret.append(uri.path)
+    path = uri.path if uri.path else '/'
+    ret.append(path)
     return ret
 
 
@@ -62,8 +77,9 @@ if __name__ == "__main__":
     host, port, path = get_uri()
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((host, int(port)))
-    s.send(REQUEST.format(path).encode('utf-8'))
-    out_log.info(REQUEST.format(path))
+    request = REQUEST.format(path, host).encode('utf-8')
+    s.send(request)
+    out_log.info(request)
 
     # recieve response from server
     # get header
@@ -78,16 +94,23 @@ if __name__ == "__main__":
         if chunked:
             size = __get_line(s)
             if size:
-                CHUNK_SIZE = int(size.decode(), 16)
+                CHUNK_SIZE = int(size.decode().strip().split(';')[0], 16)
                 in_log.info(size)
-        chunk = s.recv(CHUNK_SIZE)
-        in_log.info(chunk)
+            # DANGER: Dragons ahead! - simple magic, at first read also the
+            # trailing characters \r\n at the end of chunk and also sleep
+            # because if I won't wait it's possible I won't get whole chunk
+            sleep(0.1)
+            chunk = s.recv(CHUNK_SIZE)
+            s.recv(2)
+            in_log.debug('Receiving chunk of size {0}: data received {1}'.format(CHUNK_SIZE, len(chunk)))
+            in_log.info(chunk + b'\r\n')
+        else:
+            chunk = s.recv(CHUNK_SIZE)
+            in_log.info(chunk)
         if not chunk:
             break
         payload += chunk
         # read EOL
-        if chunked:
-            __get_line(s)
 
     s.close()
     # write what server sent

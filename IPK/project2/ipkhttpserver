@@ -18,13 +18,21 @@ RESPONSE = 'HTTP/1.1 {0} {1}\r\n{2}'
 LOG_NAME = 'ipkHttpServer-{0}'.format(datetime.today().
                                       strftime('%Y-%m-%d:%H:%M:%S'))
 
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+
 in_log = logging.getLogger('IN')
-in_log.setLevel(level=logging.INFO)
-in_log.addHandler(logging.FileHandler(LOG_NAME + '.in.log'))
+in_log.setLevel(level=logging.DEBUG)
+fh1 = logging.FileHandler(LOG_NAME + '.in.log')
+fh1.setLevel(level=logging.DEBUG)
+fh1.setFormatter(formatter)
+in_log.addHandler(fh1)
 
 out_log = logging.getLogger('OUT')
-out_log.setLevel(level=logging.INFO)
-out_log.addHandler(logging.FileHandler(LOG_NAME + '.out.log'))
+out_log.setLevel(level=logging.DEBUG)
+fh2 = logging.FileHandler(LOG_NAME + '.out.log')
+fh2.setLevel(level=logging.DEBUG)
+fh2.setFormatter(formatter)
+out_log.addHandler(fh2)
 
 
 class FileSend(socketserver.BaseRequestHandler):
@@ -49,8 +57,9 @@ class FileSend(socketserver.BaseRequestHandler):
         TCP socket handler which sends desired file to the client
         """
         # read data from the socket
-        self.data = self.request.recv(CHUNK_SIZE_REQUEST).decode('utf-8')
-        self.logger['IN'].info(self.data)
+        request = self.request.recv(CHUNK_SIZE_REQUEST)
+        self.data = request.decode('utf-8')
+        self.logger['IN'].info(request)
         request = self.data.split()
 
         # check for valid HTTP protocol
@@ -100,7 +109,10 @@ class FileSend(socketserver.BaseRequestHandler):
             response = self.header.encode('utf-8')
         response += b'\r\n' + self.message
         self.logger['OUT'].info(response)
-        self.request.sendall(response)
+        try:
+            self.request.sendall(response)
+        except ConnectionError as e:
+            self.logger['OUT'].error(e)
 
 
 def parse_args():
@@ -121,4 +133,5 @@ if __name__ == "__main__":
     DELAY = float(args['t']) / 1000
     host, port = "localhost", int(args['p'])
     server = socketserver.TCPServer((host, port), FileSend)
+    in_log.debug('Server started on port {0}, delay set to {1}, chunk size is {2}'.format(port, DELAY, CHUNK_SIZE))
     server.serve_forever()
