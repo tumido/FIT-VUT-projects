@@ -100,6 +100,7 @@ class FileSend(socketserver.BaseRequestHandler):
         else:
             with open(path, 'rb') as f:
                 content = f.read()
+            self.header += 'Content-Length: {0}\r\n'.format(len(content))
             self.message = content
             self.respond()
 

@@ -18,7 +18,7 @@ LOG_NAME = 'ipkHttpClient-{0}'.format(datetime.today().
                                       strftime('%Y-%m-%d:%H:%M:%S'))
 RESP_NAME = 'ipkResp-{0}'.format(datetime.today().
                                  strftime('%Y-%m-%d:%H:%M:%S'))
-CHUNK_SIZE = 0
+CHUNK_SIZE = 4096
 
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 
