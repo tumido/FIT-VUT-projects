@@ -84,7 +84,7 @@ if __name__ == "__main__":
     # recieve response from server
     # get header
     header = get_header(s)
-    in_log.info(header)
+    in_log.info(header + b'\r\n')
     chunked = False
     if b'Transfer-Encoding: chunked' in header:
         chunked = True
