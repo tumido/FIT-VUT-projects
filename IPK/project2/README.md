@@ -62,7 +62,7 @@ Next chunk...\r\n
 ```
 First of all header and first chunk are sent (together). After a delay server sends next chunk and repeats this step until end of file. The last chunk's size ussually differs from CHUNK_SIZE.
 
-Siple sending
+Simple sending
 -------------
 When it's not needed to send data in chunks. The content size is stated in header:
 ```
