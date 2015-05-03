@@ -2,7 +2,7 @@ Simple HTTP Server
 ==================
 
 This project is an implementation of HTTP Server using sockets.
-To start a server, please use folowing syntax:
+To start a server, please use following syntax:
 
 ```
 ./ipkhttpserver [-p PORT] [-c CHUNK_SIZE] [-t DELAY]
@@ -17,17 +17,17 @@ By default these values are used:
 | CHUNK_SIZE | 4096          |
 | DELAY      | 0             |
 
-Server follows HTTP/1.1 standard. That means it can be reached from any webbrowser currently on the market.
+Server follows HTTP/1.1 standard. That means it can be reached from any web browser currently on the market.
 
 Content type
 ------------
-In the task specification there was assumed sending of 'text/plain' content. This implemetation is capable of guessing mimetype and sends also different types of data.
-Server has access to data in local subfolder `www` only.
+In the task specification there was assumed sending of 'text/plain' content. This implementation is capable of guessing mime-type and sends also different types of data.
+Server has access to data in local sub-folder `www` only.
 
 Error handling
 --------------
 
-Server recognises two different error states. If the file is not found `404 Not Found` is returned . If the request is not valid HTTP request `400 Bad Request` is raised.
+Server recognizes two different error states. If the file is not found `404 Not Found` is returned . If the request is not valid HTTP request `400 Bad Request` is raised.
 Response messages looks like this:
 
 ```
@@ -61,7 +61,7 @@ Next chunk...\r\n
 0\r\n
 \r\n
 ```
-First of all header and first chunk are sent (together). After a delay server sends next chunk and repeats this step until end of file. The last chunk's size ussually differs from CHUNK_SIZE.
+First of all header and first chunk are sent (together). After a delay server sends next chunk and repeats this step until end of file. The last chunk's size usually differs from CHUNK_SIZE.
 
 Simple sending
 -------------
@@ -72,6 +72,7 @@ Content-Type: text/plain\r\n
 Content-Length: 74\r\n
 \r\n
 ```
+This header is followed by response body without any special trailing character. The message length corresponds to the length stated in the header
 
 Simple HTTP Client
 ==================
@@ -84,10 +85,10 @@ All parts of URI must be specified.
 
 The request follows HTTP standard and looks like this:
 ```
-GET /some_file.txt HTTP/1.1\r\n
+GET PATH_TO_FILE HTTP/1.1\r\n
 Accept: */*\r\n
 Accept-Encoding: identity\r\n
-Host: server_hostname\r\n
+Host: HOSTNAME\r\n
 Connection: close\r\n
 \r\n
 ```
@@ -95,7 +96,8 @@ After sending an request client waits for the response and saves it in the `ipkR
 
 Implementation details
 ======================
-Server (and client also) is writen in Python3 using modules `socket`, `socketserver`, `urllib.parse`, `argparse`, `os`, `logging`, `datetime`, `mimetypes` and  `time`.
+Server (and client also) is written in Python 3 using modules `socket`, `socketserver`, `urllib.parse`, `argparse`, `os`, `logging`, `datetime`, `mimetypes`, `sys` and  `time`.
+Server is capable of concurrent connections. This is possible because of inheriting from `socketserver.ThreadingMixIn` class.
 
 Logging
 =======
@@ -105,7 +107,7 @@ You can find them in the folder where these programs are launched and under name
 
 Test Suite
 ==========
-By `make tests` you can run some basic test that covers Error states, chunk-based sending, chunk-based recieving, non-text files. Also tests running server with dirretent setup (params).
+By `make tests` you can run some basic test that covers Error states, chunk-based sending, chunk-based receiving, non-text files. Also tests running server with different setup (parameters).
 
 Build
 =====

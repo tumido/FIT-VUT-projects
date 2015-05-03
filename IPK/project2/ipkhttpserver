@@ -21,7 +21,7 @@ LOG_NAME = 'ipkHttpServer-{0}'.format(datetime.today().
                                       strftime('%Y-%m-%d:%H:%M:%S'))
 
 # Set up logger
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+formatter = logging.Formatter('%(asctime)s - Thread: %(thread)d - %(levelname)s - %(message)s')
 
 in_log = logging.getLogger('IN')
 in_log.setLevel(level=logging.DEBUG)
