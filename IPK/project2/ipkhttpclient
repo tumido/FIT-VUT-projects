@@ -8,6 +8,7 @@ from datetime import datetime
 from urllib.parse import urlparse
 from time import sleep
 
+# Set up basic formats and default values
 REQUEST = ('GET {0} HTTP/1.1\r\n'
            'Accept: */*\r\n'
            'Accept-Encoding: identity\r\n'
@@ -20,6 +21,7 @@ RESP_NAME = 'ipkResp-{0}'.format(datetime.today().
                                  strftime('%Y-%m-%d:%H:%M:%S'))
 CHUNK_SIZE = 4096
 
+# Set up loggers
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 
 in_log = logging.getLogger('IN')
@@ -56,6 +58,11 @@ def get_uri():
 
 
 def __get_line(s):
+    """
+    Recive line of text via socket
+    :param s: socket
+    :return line: line of response
+    """
     line = bytes()
     while True:
         char = s.recv(1)
@@ -65,6 +72,11 @@ def __get_line(s):
 
 
 def get_header(s):
+    """
+    Get whole header of the response, reads lines until blank line
+    :param s: socket
+    :return header: header of response
+    """
     header = bytes()
     while True:
         line = __get_line(s)
@@ -74,9 +86,11 @@ def get_header(s):
 
 
 if __name__ == "__main__":
+    # set up uri and establish connection
     host, port, path = get_uri()
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((host, int(port)))
+    # send request
     request = REQUEST.format(path, host).encode('utf-8')
     s.send(request)
     out_log.info(request)
@@ -92,28 +106,34 @@ if __name__ == "__main__":
     payload = bytes()
     while True:
         if chunked:
+            # if the content is chunked, at first read the size of the chunk
             size = __get_line(s)
             if size:
                 CHUNK_SIZE = int(size.decode().strip().split(';')[0], 16)
                 in_log.info(size)
-            # DANGER: Dragons ahead! - simple magic, at first read also the
-            # trailing characters \r\n at the end of chunk and also sleep
-            # because if I won't wait it's possible I won't get whole chunk
+            # wait a bit, it can take a while until chunks is filled,
+            # especially when the size is large
             sleep(0.1)
+            # recieve data
             chunk = s.recv(CHUNK_SIZE)
-            s.recv(2)
-            in_log.debug('Receiving chunk of size {0}: data received {1}'.format(CHUNK_SIZE, len(chunk)))
-            in_log.info(chunk + b'\r\n')
+            in_log.debug('Receiving chunk of size {0}: data received {1}'.
+                         format(CHUNK_SIZE, len(chunk)))
+            in_log.info(chunk)
+            # read EOL after chunk's data
+            if s.recv(2) != b'\r\n':
+                raise ConnectionError('Unexpected end of chunk')
         else:
+            # if we are not using chunked encoding reads the buffer until it's
+            # empty
             chunk = s.recv(CHUNK_SIZE)
             in_log.info(chunk)
         if not chunk:
             break
+        # add recived data to the payload buffer
         payload += chunk
-        # read EOL
 
     s.close()
-    # write what server sent
+    # write the data to header and payload file
     with open(RESP_NAME + '.header', 'wb') as h:
         h.write(header)
         h.flush()

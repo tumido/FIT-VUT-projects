@@ -9,6 +9,7 @@ from datetime import datetime
 from time import sleep
 from mimetypes import guess_type
 
+# Set up default constants and formats
 CHUNK_SIZE = '4096'
 CHUNK_SIZE_REQUEST = 4096
 DEFAULT_PORT = '8080'
@@ -18,6 +19,7 @@ RESPONSE = 'HTTP/1.1 {0} {1}\r\n{2}'
 LOG_NAME = 'ipkHttpServer-{0}'.format(datetime.today().
                                       strftime('%Y-%m-%d:%H:%M:%S'))
 
+# Set up logger
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 
 in_log = logging.getLogger('IN')
@@ -42,6 +44,10 @@ class FileSend(socketserver.BaseRequestHandler):
     Overrides the handle() method to implement the communication to the client
     """
     def __init__(self, request, client_address, server):
+        """
+        Initialize the Handler with empty buffers for header, response and
+        set up logging. Then call parent's __init__
+        """
         self.header = str()
         self.message = bytes()
         self.logger = dict()
@@ -62,14 +68,16 @@ class FileSend(socketserver.BaseRequestHandler):
         self.logger['IN'].info(request)
         request = self.data.split()
 
-        # check for valid HTTP protocol
+        # check for valid HTTP protocol in request
         if request[0] != 'GET' or request[2] != 'HTTP/1.1':
             self.header = RESPONSE.format('400', 'Bad Request', '')
             self.respond()
             return
 
+        # find the requested file
         path = os.path.join(os.getcwd(), DATA_FOLDER) + request[1]
 
+        # if not found respond 404
         if not os.path.isfile(path):
             self.header = RESPONSE.format('404', 'Not Found', '')
             self.respond()
@@ -79,7 +87,11 @@ class FileSend(socketserver.BaseRequestHandler):
         mimetype = guess_type(path)[0]
         self.header = RESPONSE.format('200', 'OK',
                                       'Content-Type: {0}\r\n'.format(mimetype))
+
+        # if the file size is larger than CHUNK_SIZE then enter the Chunked
+        # encoded sending mode
         if os.path.getsize(path) > CHUNK_SIZE:
+            # Modify header
             self.header += 'Transfer-Encoding: chunked\r\n'
             header = True
             # send by chunks
@@ -88,28 +100,45 @@ class FileSend(socketserver.BaseRequestHandler):
                     content = f.read(CHUNK_SIZE)
                     if not content:
                         break
+                    # count size of chunk (the last chunk size differs)
                     ch_hex = hex(len(content)).split('x')[-1].encode('utf-8')
+                    # add to the message and respond
                     self.message = ch_hex + b'\r\n' + content
                     self.respond(header=header)
+                    # if we have sent the first chunks, header is no more added
+                    # to the message
                     if header:
                         header = False
                     sleep(DELAY)
             # send final chunk
-            self.message = b'0\r\n\r\n'
+            self.message = b'0\r\n'
             self.respond(header=False)
         else:
+            # Normal mode, send until EOF
             with open(path, 'rb') as f:
                 content = f.read()
             self.header += 'Content-Length: {0}\r\n'.format(len(content))
             self.message = content
-            self.respond()
+            self.respond(chunked=False)
 
-    def respond(self, header=True):
+    def respond(self, header=True, chunked=True):
+        """
+        Function for sending the response
+        :param header: if header should be sent
+        :param chunked: whether to add the chunk's-ending CRLF or not
+        """
         response = bytes()
+        # add header
         if header:
             response = self.header.encode('utf-8')
-        response += b'\r\n' + self.message
+            response += b'\r\n'
+        # add response body
+        response += self.message
+        # add trailing CRLF
+        if chunked:
+            response += b'\r\n'
         self.logger['OUT'].info(response)
+        # send it!
         try:
             self.request.sendall(response)
         except ConnectionError as e:
@@ -129,10 +158,13 @@ def parse_args():
     return vars(parser.parse_args())
 
 if __name__ == "__main__":
+    # parse arguments and set the server parameters
     args = parse_args()
     CHUNK_SIZE = int(args['c'])
     DELAY = float(args['t']) / 1000
     host, port = "localhost", int(args['p'])
+    # launch the server
     server = socketserver.TCPServer((host, port), FileSend)
-    in_log.debug('Server started on port {0}, delay set to {1}, chunk size is {2}'.format(port, DELAY, CHUNK_SIZE))
+    in_log.debug('Server started on port {0}, delay set to {1},'
+                 'chunk size is {2}'.format(port, DELAY, CHUNK_SIZE))
     server.serve_forever()
