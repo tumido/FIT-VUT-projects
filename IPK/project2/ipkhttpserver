@@ -3,6 +3,7 @@ __author__ = 'xcoufa09'
 
 import logging
 import os
+import sys
 import socketserver
 from argparse import ArgumentParser
 from datetime import datetime
@@ -35,6 +36,16 @@ fh2 = logging.FileHandler(LOG_NAME + '.out.log')
 fh2.setLevel(level=logging.DEBUG)
 fh2.setFormatter(formatter)
 out_log.addHandler(fh2)
+
+
+class Server(socketserver.ThreadingMixIn, socketserver.TCPServer):
+    # on Ctrl-C kill all spawned threads
+    daemon_threads = True
+    # much faster rebinding
+    allow_reuse_address = True
+
+    def __init__(self, server_address, RequestHandlerClass):
+        socketserver.TCPServer.__init__(self, server_address, RequestHandlerClass)
 
 
 class FileSend(socketserver.BaseRequestHandler):
@@ -164,7 +175,12 @@ if __name__ == "__main__":
     DELAY = float(args['t']) / 1000
     host, port = "localhost", int(args['p'])
     # launch the server
-    server = socketserver.TCPServer((host, port), FileSend)
+    server = Server((host, port), FileSend)
     in_log.debug('Server started on port {0}, delay set to {1},'
                  'chunk size is {2}'.format(port, DELAY, CHUNK_SIZE))
-    server.serve_forever()
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        server.socket.close()
+        sys.exit(0)
+

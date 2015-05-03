@@ -1,5 +1,5 @@
 PROGS=ipkhttpserver ipkhttpclient
-TESTS=
+TESTS=www test_it.sh
 
 all:
 	chmod +x $(PROGS)
@@ -9,6 +9,6 @@ all:
 clean:
 	rm -rf *.payload *.header *.log
 test:
-	echo 'test'
+	bash test_it.sh
 pack:
 	tar czf xcoufa09.tgz $(PROGS) $(TESTS)
