@@ -1,5 +1,4 @@
 #!/bin/bash
-2>/dev/nul
 spacer=`printf '=%.s' {1..80}`
 ok="\e[1;32mOK\e[0m"
 fail="\e[1;31mFAIL\e[0m"
