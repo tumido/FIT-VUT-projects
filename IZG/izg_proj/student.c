@@ -122,8 +122,10 @@ void studrenClearBuffers(S_Renderer *pRenderer)
     /* vymazeme a inicializujeme buffery */
     /* ??? */
 
+    /* "nulovani" head pointer bufferu */
     memset(renderer->head_pointer_buffer, -1, pRenderer->frame_h * pRenderer->frame_w * sizeof(int));
 
+    /* uvolneni a opetovna inicializace fragvec */
     fragvecRelease(&renderer->node_buffer);
     renderer->node_buffer = fragvecCreateEmpty();
 
@@ -273,26 +275,31 @@ void studrenDrawTriangle(S_Renderer *pRenderer,
                 next = renderer->head_pointer_buffer[index];
                 if (next == -1)
                 {
+                    /* prvni fragment na indexu */
                     fragment = makeFrag(color, z, -1);
                     renderer->head_pointer_buffer[index] = fragvecPushBack(renderer->node_buffer, fragment);
                 } else
                 {
-                  frag_tmp = fragvecGetPtr(renderer->node_buffer, next);
-                  if (frag_tmp->depth > z)
-                  {
-                    fragment = makeFrag(color, z, next);
-                    renderer->head_pointer_buffer[index] = fragvecPushBack(renderer->node_buffer, fragment);
-                  } else
-                  {
+                    /* uz tam nejake jsou */
+                    frag_tmp = fragvecGetPtr(renderer->node_buffer, next);
+                    if (frag_tmp->depth > z)
+                    {
+                        /* fragment v vectoru je hloubeji nez pridavany, muzeme ho pridat na vrchol */
+                        fragment = makeFrag(color, z, next);
+                        renderer->head_pointer_buffer[index] = fragvecPushBack(renderer->node_buffer, fragment);
+                    } else
+                    {
+                        /* musime najit spravne misto pro pridavany fragment */
                         while (frag_tmp->next != -1 && z < frag_tmp->depth) {
                             next = frag_tmp->next;
                             frag_tmp = fragvecGetPtr(renderer->node_buffer, frag_tmp->next);
                         }
-
+                        /* vlozime jej na misto */
+                        /* promenna tmp je to jaksi navic, ale bez ni to proste pri urcitem natoceni segfaultuje.. nechapu to, ale je to tak */
                         fragment = makeFrag(color, z, frag_tmp->next);
                         tmp = fragvecPushBack(renderer->node_buffer, fragment);
                         fragvecGetPtr(renderer->node_buffer, next)->next = tmp;
-                  }
+                    }
                 }
             }
 
@@ -422,9 +429,6 @@ void renderStudentScene(S_Renderer *pRenderer, S_Model *pModel)
 
     renderModel(pRenderer, pModel);
 
-    /* insertion sort */
-
-
     /* vypocitame finalni barvu pixelu a vykreslime */
     for (x = 0; x < pRenderer->frame_w; x++)
     {
@@ -432,6 +436,7 @@ void renderStudentScene(S_Renderer *pRenderer, S_Model *pModel)
         {
             S_RGBA finalColor = {};
             index = renderer->head_pointer_buffer[y * pRenderer->frame_w + x];
+            /* u cernych pixelu barvu nemichame */
             if (index < 0)
             {
                 finalColor = COLOR_BLACK;
@@ -447,6 +452,7 @@ void renderStudentScene(S_Renderer *pRenderer, S_Model *pModel)
                 finalColor.blue += a_dst * fragment->color.blue;
                 a_dst *= (1.0 - a_src);
                 index = fragment->next;
+                /* nepruhledna vrstva */
                 if (fragment->color.alpha == 255)
                   break;
             }

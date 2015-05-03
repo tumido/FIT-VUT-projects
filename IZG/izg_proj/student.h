@@ -39,7 +39,9 @@ typedef struct S_StudentRenderer
 
     /* Zde uz muzete doplnovat svuj kod dle libosti */
     /* ??? */
+    /* pole integeru -> stejne ma konstantni velikost a fragvecPushBack vraci int, takze vetsi cisla se stejne ukladat nebudou */
     int * head_pointer_buffer;
+    /* fragVec se primo nabizi */
     S_FragVec * node_buffer;
 } S_StudentRenderer;
 
