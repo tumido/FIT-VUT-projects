@@ -4,3 +4,6 @@
 [submodule "ISJ"]
 	path = ISJ
 	url = git@bitbucket.org:xauder/isj-projekt.git
+[submodule "ICP"]
+	path = ICP
+	url = git@github.com:tumido/ICP-Project.git
