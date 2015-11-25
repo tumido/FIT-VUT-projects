@@ -1,0 +1,92 @@
+#!/usr/bin/env python3
+import sys
+import os
+import logging.config
+import logging
+
+from argparse import ArgumentParser, RawTextHelpFormatter
+
+from Util import *
+
+# Set up logger
+class Filter(logging.Filter):
+    """ Decide whether the message should be accepted by the handler or not """
+    def __init__(self, level):
+        self._level = level
+        super(logging.Filter, self)
+
+    def filter(self, rec):
+        return rec.levelno < self._level
+
+# add different handlers for stderr and stdout
+logger = logging.getLogger('antipirat')
+logger.setLevel(logging.DEBUG)
+stdout = logging.StreamHandler(stream=sys.stdout)
+stderr = logging.StreamHandler(stream=sys.stderr)
+stdout.setLevel(logging.DEBUG)
+stderr.setLevel(logging.WARNING)
+stdout.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
+stderr.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
+stdout.addFilter(Filter(logging.WARNING))
+logger.addHandler(stdout)
+logger.addHandler(stderr)
+
+def arg_parser():
+    """
+    Argument parser
+    """
+    parser = ArgumentParser(description="Script for parsing a Torrent's RSS "
+                                        "announce feed to identify peers",
+                            epilog='Tomas Coufal <xcoufa09@stud.fit.vutbr.cz>' )
+    dummy_group = parser.add_argument_group(title='mode selection')
+    group = dummy_group.add_mutually_exclusive_group(required=True)
+    group.add_argument('-r', '--rss',
+                        action='store', metavar='', dest='r',
+                        help='URL for RSS announce feed')
+    group.add_argument('-i', '--input-announcement',
+                        action='store', metavar='', dest='i',
+                        help='RSS feed stored in file')
+    group.add_argument('-t', '--torrent-file',
+                        action='store', metavar='', dest='t',
+                        help='torrent file has already been downloaded')
+    parser.add_argument('-a', '--tracker-announce-url',
+                        action='store', metavar='', dest='a',
+                        help='mocked tracker URL to get peerlist')
+    return vars(parser.parse_args())
+
+def antipirat(url, xml, torrent, tracker):
+    """
+    Antipirat app launcher, parses a RSS Torrent announce feed, takes the latest
+    Torrent and lists its peers from the http/udp trackers
+    """
+
+    try:
+        # if we have url, let's download RSS xml
+        if url:
+            xml = get_announce(url)
+
+        # we have xml, now it's time to parse it
+        if xml:
+            first_torrent = announce_to_txt(xml)
+            get_torrent_file(first_torrent)
+            torrent = first_torrent['filename']
+
+        # we have Torrent file
+        if torrent:
+            trackers, infohash = parse_torrent_file(torrent)
+            # if user forced trackers, overide what we've found
+            if tracker:
+                trackers = [tracker]
+            peers = get_peerlist(trackers, infohash)
+            save_peerlist(infohash, peers)
+    except Exception as e:
+        sys.exit(e)
+
+if __name__ == '__main__':
+    args = arg_parser()
+    # these args carry the mode information
+    url = args['r']
+    xml = args['i']
+    torrent = args['t']
+    tracker = args['a']
+    antipirat(url, xml, torrent, tracker)
