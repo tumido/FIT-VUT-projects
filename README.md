@@ -1,12 +1,10 @@
-FIT VUT
-=======
+# FIT VUT
 
 This repository contains all of projects I've done (or participated in) during my studies at Brno Univesity of Technology - Faculty of Information Technology. Feel free to inspire yourself but be aware - there are projects that hasn't been corrected after the deadline. It's possible that there are some errors. If you find any please feel free to message me or even better make a pull request (if you are interested :P )
 
 Enjoy!
 
-Projects listed
----------------
+## Projects listed
 
 * IZP
     1. Counting words (containing designated character, in designated position, etc.)
@@ -34,9 +32,13 @@ Projects listed
 * IPP
     1. In PHP create XML query script
     2. Write a script in Python 3 for C statistics: count all occurencies of keywords, identificators, sum of characters in comments, etc.
+* ICP
+    1. Maze - the board game, written in C++ using Qt framework as frontend, pair project, added as separate repository/submodule
+* ISA
+    1. BitTorrent service network protocol analyzator. Using Bencodepy for Python 3
 
-Subjects not listed
--------------------
+## Subjects not listed
+
 Projects in some subjects were mainly about completing definitions of functions for given framework of which I'm not the author. Due to this I won't publish these source codes.
 * IAL - sorting and searching methods, queues and stacks
 * IZG - displaying of 2D and 3D object, filling them etc.

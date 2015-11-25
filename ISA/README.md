@@ -66,30 +66,3 @@ INFO: File b97ca062df35c687982f0b1e437cc60f197f1367.peerlist was successfully sa
 Unpack this archive and run `make`. On regular systems this will install all the
 required Python packages using `pip` for you and you're ready to go.
 
-### Target system
-
-For the purpose of testing I simply can't relly on this, because `pip` is not
-available on target system. To bypass this nonsense the only missing package
-there - the [BencodePy](https://github.com/eweast/BencodePy.git) package has been
-attached directly _as is_ to the archive and the `sys.path` in `antipirat` file
-has also been updated accordingly. I'm not the Author of this package
-all credits belong to [Eric Weast](https://github.com/eweast).
-
-### Archive content
-```
-xcoufa09.tgz
-    ├──  BencodePy - contains BencodePy package
-    |               (git clone https://github.com/eweast/BencodePy.git
-    |                && rm -r tests build misc .git)
-    ├──  Util
-    │    ├── __init__.py
-    │    ├── Announce.py - RSS feed heavy lifting
-    │    ├── Torrent.py - Torrent file parsing
-    │    └── Tracker.py - Communication with trackers
-    ├── Makefile
-    ├── manual.pdf
-    ├── README -> ./README.md
-    ├── README.md
-    ├── requirements.txt - For pip installation
-    └── antipirat - Execute this
-```
