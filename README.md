@@ -1,6 +1,6 @@
 # FIT VUT
 
-This repository contains all of projects I've done (or participated in) during my studies at Brno Univesity of Technology - Faculty of Information Technology. Feel free to inspire yourself but be aware - there are projects that hasn't been corrected after the deadline. It's possible that there are some errors. If you find any please feel free to message me or even better make a pull request (if you are interested :P )
+This repository contains all of projects I've done (or participated in) during my studies at Brno Univesity of Technology - Faculty of Information Technology. Feel free to inspire yourself.
 
 Enjoy!
 
@@ -19,9 +19,9 @@ Enjoy!
 * ISJ
     1. Webserver managing database of kindergartens based on location and budget (for more details see the [original repository](https://bitbucket.org/xauder/isj-projekt "Hosted on Bitbucket"))
 * IFJ
-    1. Pascal interpreter. Team of 4 members. I'm not proud about the result, but judge yourself...
+    1. Pascal interpreter. Team of 4. I'm not proud of the result but take a look...
 * ISS
-    1. Some image filtering and noise reduction etc.
+    1. Image filtering and noise reduction etc.
 * ITY
     1. LaTeX basics
     2. Use LaTeX for math formulas
@@ -39,6 +39,6 @@ Enjoy!
 
 ## Subjects not listed
 
-Projects in some subjects were mainly about completing definitions of functions for given framework of which I'm not the author. Due to this I won't publish these source codes.
+During some courses we had projects that weren't stand alone apps but rather parts of prefilled frameworks. I don't own any right to these frameworks. Due to this I won't publish source codes of these projects.
 * IAL - sorting and searching methods, queues and stacks
 * IZG - displaying of 2D and 3D object, filling them etc.
