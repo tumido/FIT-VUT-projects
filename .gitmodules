@@ -7,3 +7,6 @@
 [submodule "ICP"]
 	path = ICP
 	url = git@github.com:tumido/ICP-Project.git
+[submodule "IMS"]
+	path = IMS
+	url = git@github.com:tumido/IMS-petri-net.git

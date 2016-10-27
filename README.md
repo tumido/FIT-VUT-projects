@@ -39,6 +39,8 @@ Enjoy!
 * ITS - Testing and Dynamic Analysis
     1. A simple test plan for freeIPA login page
     2. Selenium tests implementing the test plan above
+* IMS - Modelling and Simulation
+    1. Petri networks simulator
 
 ## Subjects not listed
 
