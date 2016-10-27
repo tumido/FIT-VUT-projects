@@ -36,6 +36,9 @@ Enjoy!
     1. Maze - the board game, written in C++ using Qt framework as frontend, pair project, added as separate repository/submodule
 * ISA
     1. BitTorrent service network protocol analyzator. Using Bencodepy for Python 3
+* ITS
+    1. A simple test plan for freeIPA login page
+    2. Selenium tests implementing the test plan above
 
 ## Subjects not listed
 
